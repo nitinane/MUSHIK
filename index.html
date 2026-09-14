@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Modak Run — Ganesh Chaturthi Platformer</title>
+    <meta name="description" content="Modak Run: Help Mushak leap across festival streets, defeat sneaky cats, collect delicious modaks, and reach Lord Ganesha's Pandal!">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+    <!-- Game Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Phaser 3 Engine (Local with CDN fallback) -->
+    <script src="js/phaser.min.js"></script>
+    <script>
+        if (typeof Phaser === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script>');
+        }
+    </script>
+</head>
+<body>
+    <div id="game-wrapper">
+        <div id="game-container"></div>
+    </div>
+
+    <!-- Game Scripts -->
+    <script src="audio.js"></script>
+    <script src="levelConfigs.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
