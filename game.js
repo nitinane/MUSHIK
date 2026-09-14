@@ -1067,7 +1067,7 @@ class LevelScene extends Phaser.Scene {
         this.hudContainer.add(this.modakText);
 
         // Score display
-        this.scoreText = this.add.text(700, 16, 'SCORE: 0', {
+        this.scoreText = this.add.text(685, 16, 'SCORE: 0', {
             fontFamily: 'Trebuchet MS, sans-serif',
             fontSize: '18px',
             fontStyle: 'bold',
@@ -1075,11 +1075,29 @@ class LevelScene extends Phaser.Scene {
         });
         this.hudContainer.add(this.scoreText);
 
-        // Top bar action buttons: Touch Toggle, Pause, Restart, Menu
-        this.touchBtn = this.createTopBarButton(885, 28, 92, 34, '📱 Touch', 0x00695C, 0x80CBC4, () => this.toggleTouchControls());
-        this.createTopBarButton(985, 28, 88, 34, '⏸️ Pause', 0x4A148C, 0xCE93D8, () => this.togglePause());
-        this.createTopBarButton(1085, 28, 92, 34, '↺ Restart', 0xB71C1C, 0xEF5350, () => this.restartLevel());
-        this.createTopBarButton(1190, 28, 88, 34, '⌂ Menu', 0x1B5E20, 0x81C784, () => this.scene.start('MenuScene'));
+        // Top bar action buttons: Fullscreen, Touch Toggle, Pause, Restart, Menu
+        this.createTopBarButton(785, 28, 76, 34, '⛶ Full', 0x1A237E, 0x5C6BC0, () => this.toggleFullscreen());
+        this.touchBtn = this.createTopBarButton(880, 28, 88, 34, '📱 Touch', 0x00695C, 0x80CBC4, () => this.toggleTouchControls());
+        this.createTopBarButton(975, 28, 86, 34, '⏸️ Pause', 0x4A148C, 0xCE93D8, () => this.togglePause());
+        this.createTopBarButton(1075, 28, 90, 34, '↺ Restart', 0xB71C1C, 0xEF5350, () => this.restartLevel());
+        this.createTopBarButton(1180, 28, 86, 34, '⌂ Menu', 0x1B5E20, 0x81C784, () => this.scene.start('MenuScene'));
+    }
+
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            const el = document.documentElement;
+            if (el.requestFullscreen) {
+                el.requestFullscreen().catch(() => {});
+            } else if (el.webkitRequestFullscreen) {
+                el.webkitRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
     }
 
     createMobileControls() {
@@ -2611,10 +2629,26 @@ class SkyDashScene extends Phaser.Scene {
             this.handleFlapInput();
         });
 
-        // Collision with obstacle group
-        this.physics.add.overlap(this.plane, this.obstacleGroup, () => {
-            this.handleGameOver('obstacle');
-        }, null, this);
+        // Top HUD (depth 100)
+        this.createHUD();
+
+        // Ready Banner / Instructions (depth 50)
+        this.createReadyPrompt();
+
+        // Dedicated Mobile Flap Button (depth 120)
+        this.createMobileFlapButton();
+
+        // Controls
+        this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.upKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+        this.wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+
+        // Input listener (click or tap anywhere)
+        this.input.on('pointerdown', (pointer) => {
+            // Check if user clicked top buttons (Exit or Fullscreen)
+            if (pointer.y < 65 && (pointer.x < 190 || pointer.x > width - 80)) return;
+            this.handleFlapInput();
+        });
     }
 
     createHUD() {
@@ -2655,14 +2689,34 @@ class SkyDashScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(100);
 
         // Best Score in Top Right
-        this.bestText = this.add.text(width - 130, 40, `👑 BEST: ${this.bestScore}`, {
+        this.bestText = this.add.text(width - 155, 40, `👑 BEST: ${this.bestScore}`, {
             fontFamily: 'Segoe UI, sans-serif',
-            fontSize: '17px',
+            fontSize: '16px',
             fontStyle: 'bold',
             color: '#FFD54F',
             backgroundColor: 'rgba(0,0,0,0.5)',
-            padding: { x: 12, y: 6 }
+            padding: { x: 10, y: 6 }
         }).setOrigin(0.5).setDepth(100);
+
+        // Fullscreen Toggle Button in Top Right
+        this.createTopBarButton(width - 45, 40, 52, 34, '⛶ Full', 0x1A237E, 0x5C6BC0, () => this.toggleFullscreen());
+    }
+
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            const el = document.documentElement;
+            if (el.requestFullscreen) {
+                el.requestFullscreen().catch(() => {});
+            } else if (el.webkitRequestFullscreen) {
+                el.webkitRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
     }
 
     createMobileFlapButton() {
@@ -2801,14 +2855,14 @@ class SkyDashScene extends Phaser.Scene {
         if (this.gameState !== 'PLAYING') return;
 
         const spawnX = 1320;
-        const gapHeight = 250; // Extra generous gap for smooth passage
+        const gapHeight = 260; // Extra generous 260px gap for smooth passage
 
         // Smooth gradual height transitions without steep deadends
         if (!this.lastGapCenter) {
-            this.lastGapCenter = 350;
+            this.lastGapCenter = 360;
         }
-        const minCenter = Math.max(210, this.lastGapCenter - 110);
-        const maxCenter = Math.min(490, this.lastGapCenter + 110);
+        const minCenter = Math.max(200, this.lastGapCenter - 90);
+        const maxCenter = Math.min(480, this.lastGapCenter + 90);
         const gapCenter = Phaser.Math.Between(minCenter, maxCenter);
         this.lastGapCenter = gapCenter;
 
@@ -2818,30 +2872,16 @@ class SkyDashScene extends Phaser.Scene {
         const topHeight = Math.max(40, gapTop);
         const bottomHeight = Math.max(40, 720 - gapBottom);
 
-        // Top Pillar: warp pipe flipped vertically hanging from ceiling
-        const topPillar = this.physics.add.image(spawnX, topHeight / 2, 'warp_pipe');
+        // Top Pillar: warp pipe flipped vertically hanging from ceiling (clean visual image)
+        const topPillar = this.add.image(spawnX, topHeight / 2, 'warp_pipe');
         topPillar.setDisplaySize(72, topHeight);
         topPillar.setFlipY(true);
         topPillar.setDepth(15);
-        this.obstacleGroup.add(topPillar);
 
-        // Completely immune to gravity & frozen in vertical position
-        topPillar.body.setSize(66, topHeight);
-        topPillar.body.setImmovable(true);
-        topPillar.body.setAllowGravity(false);
-        topPillar.body.moves = false;
-
-        // Bottom Pillar: warp pipe rising up from bottom
-        const bottomPillar = this.physics.add.image(spawnX, gapBottom + bottomHeight / 2, 'warp_pipe');
+        // Bottom Pillar: warp pipe rising up from bottom (clean visual image)
+        const bottomPillar = this.add.image(spawnX, gapBottom + bottomHeight / 2, 'warp_pipe');
         bottomPillar.setDisplaySize(72, bottomHeight);
         bottomPillar.setDepth(15);
-        this.obstacleGroup.add(bottomPillar);
-
-        // Completely immune to gravity & frozen in vertical position
-        bottomPillar.body.setSize(66, bottomHeight);
-        bottomPillar.body.setImmovable(true);
-        bottomPillar.body.setAllowGravity(false);
-        bottomPillar.body.moves = false;
 
         this.obstacles.push({
             top: topPillar,
@@ -2849,6 +2889,8 @@ class SkyDashScene extends Phaser.Scene {
             x: spawnX,
             topY: topHeight / 2,
             bottomY: gapBottom + bottomHeight / 2,
+            gapTop: gapTop,
+            gapBottom: gapBottom,
             passed: false
         });
     }
@@ -2872,31 +2914,41 @@ class SkyDashScene extends Phaser.Scene {
             this.plane.rotation = Phaser.Math.Linear(this.plane.rotation, targetRot, 0.12);
 
             // Ceiling and Floor collision checks
-            if (this.plane.y < 20 || this.plane.y > 690) {
+            if (this.plane.y < 20 || this.plane.y > 685) {
                 this.handleGameOver('bounds');
                 return;
             }
 
             // Move all active obstacles synchronously every frame
             const moveDelta = 220 * (delta / 1000);
+            const px1 = this.plane.x - 20;
+            const px2 = this.plane.x + 20;
+            const py1 = this.plane.y - 12;
+            const py2 = this.plane.y + 12;
+
             for (let i = this.obstacles.length - 1; i >= 0; i--) {
                 const obs = this.obstacles[i];
                 obs.x -= moveDelta;
                 obs.top.x = obs.x;
                 obs.bottom.x = obs.x;
-
-                // Lock Y position so it can NEVER drop or drift
                 obs.top.y = obs.topY;
                 obs.bottom.y = obs.bottomY;
 
-                // Sync physics body positions exactly to the visual sprites
-                if (obs.top.body) {
-                    obs.top.body.position.x = obs.x - obs.top.body.halfWidth;
-                    obs.top.body.position.y = obs.topY - obs.top.body.halfHeight;
-                }
-                if (obs.bottom.body) {
-                    obs.bottom.body.position.x = obs.x - obs.bottom.body.halfWidth;
-                    obs.bottom.body.position.y = obs.bottomY - obs.bottom.body.halfHeight;
+                // Direct, fair AABB collision check
+                const ox1 = obs.x - 28;
+                const ox2 = obs.x + 28;
+                if (px2 > ox1 && px1 < ox2) {
+                    // Collision with top pipe
+                    if (py1 < obs.gapTop) {
+                        this.handleGameOver('obstacle');
+                        return;
+                    }
+                    // Collision with bottom pipe
+                    if (py2 > obs.gapBottom) {
+                        this.handleGameOver('obstacle');
+                        return;
+                    }
+                    // Inside the gap: completely safe to pass!
                 }
 
                 // Check scoring: when plane's x passes obstacle's x
