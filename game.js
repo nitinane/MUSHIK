@@ -64,8 +64,8 @@ class PreloadScene extends Phaser.Scene {
             statusText.setText('Loading: ' + file.key);
         });
 
-        // Load all 13 exact game assets from assets/ with cache-buster v=6
-        const v = '?v=6';
+        // Load all 13 exact game assets from assets/ with cache-buster v=7
+        const v = '?v=7';
         this.load.image('background', 'assets/background.png' + v);
         this.load.image('standing_mushak', 'assets/standing_mushak.png' + v);
         this.load.image('mushak_running_1', 'assets/mushak_running_1.png' + v);
@@ -134,7 +134,7 @@ class MenuScene extends Phaser.Scene {
         });
 
         // Flanking divine items on sides of logo: Ganesha Coin (left) and Modak (right)
-        const leftCoin = this.add.image(width / 2 - 210, 170, 'ganesha_coin').setDisplaySize(42, 63);
+        const leftCoin = this.add.image(width / 2 - 210, 170, 'ganesha_coin').setDisplaySize(52, 52);
         const rightModak = this.add.image(width / 2 + 210, 170, 'modak').setDisplaySize(52, 52);
 
         this.tweens.add({
@@ -1043,7 +1043,7 @@ class LevelScene extends Phaser.Scene {
         this.hudContainer.add(levelTitle);
 
         // Ganesha Coin count
-        const coinIcon = this.add.image(495, 28, 'ganesha_coin').setDisplaySize(18, 27);
+        const coinIcon = this.add.image(495, 28, 'ganesha_coin').setDisplaySize(26, 26);
         this.hudContainer.add(coinIcon);
 
         this.coinText = this.add.text(512, 16, 'x 0', {
@@ -1720,11 +1720,12 @@ class LevelScene extends Phaser.Scene {
             this.showFloatingText(block.x, block.y - 22, '+25 GANESHA COIN! 🪙', '#FFD700');
 
             // 3D Coin medallion emerges and spins in air like a classic Mario coin!
-            const popCoin = this.add.image(block.x, block.y - 16, 'ganesha_coin').setDisplaySize(28, 42).setDepth(6);
+            const popCoin = this.add.image(block.x, block.y - 16, 'ganesha_coin').setDisplaySize(34, 34).setDepth(6);
+            const baseCoinScale = popCoin.scaleX;
             this.tweens.add({
                 targets: popCoin,
                 y: block.y - 68,
-                scaleX: { from: 1.0, to: 0.15 },
+                scaleX: { from: baseCoinScale, to: baseCoinScale * 0.15 },
                 duration: 380,
                 yoyo: true,
                 repeat: 1,
@@ -1749,11 +1750,12 @@ class LevelScene extends Phaser.Scene {
             this.showFloatingText(block.x, block.y - 20, '+10 MODAK', '#FFD700');
 
             const popModak = this.add.image(block.x, block.y - 16, 'modak').setDisplaySize(32, 32).setDepth(6);
+            const baseModakScale = popModak.scaleX;
             this.tweens.add({
                 targets: popModak,
                 y: block.y - 56,
-                scaleX: 1.25,
-                scaleY: 1.25,
+                scaleX: baseModakScale * 1.25,
+                scaleY: baseModakScale * 1.25,
                 alpha: 0,
                 duration: 480,
                 ease: 'Quad.easeOut',
@@ -2624,31 +2626,37 @@ class SkyDashScene extends Phaser.Scene {
 
         // Input listener (click or tap anywhere)
         this.input.on('pointerdown', (pointer) => {
-            // Check if user clicked top-left Exit button
-            if (pointer.x < 190 && pointer.y < 65) return;
+            // Check if user clicked top buttons (Exit on left, Fullscreen on right)
+            if (pointer.y < 65 && (pointer.x < 190 || pointer.x > width - 90)) return;
             this.handleFlapInput();
         });
+    }
 
-        // Top HUD (depth 100)
-        this.createHUD();
+    createTopBarButton(x, y, w, h, text, color, strokeColor, onClick) {
+        const btn = this.add.container(x, y).setScrollFactor(0).setDepth(200);
+        const bg = this.add.graphics();
+        bg.fillStyle(color, 0.88);
+        bg.fillRoundedRect(-w / 2, -h / 2, w, h, 8);
+        bg.lineStyle(1.5, strokeColor, 1);
+        bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 8);
 
-        // Ready Banner / Instructions (depth 50)
-        this.createReadyPrompt();
+        const txt = this.add.text(0, 0, text, {
+            fontFamily: 'Segoe UI, sans-serif',
+            fontSize: '13px',
+            fontStyle: 'bold',
+            color: '#FFFFFF'
+        }).setOrigin(0.5);
 
-        // Dedicated Mobile Flap Button (depth 120)
-        this.createMobileFlapButton();
-
-        // Controls
-        this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        this.upKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
-        this.wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-
-        // Input listener (click or tap anywhere)
-        this.input.on('pointerdown', (pointer) => {
-            // Check if user clicked top buttons (Exit or Fullscreen)
-            if (pointer.y < 65 && (pointer.x < 190 || pointer.x > width - 80)) return;
-            this.handleFlapInput();
+        btn.add([bg, txt]);
+        btn.setSize(w, h);
+        btn.setInteractive({ useHandCursor: true });
+        btn.on('pointerdown', () => {
+            btn.setScale(0.92);
+            onClick();
         });
+        btn.on('pointerup', () => btn.setScale(1.0));
+        btn.on('pointerout', () => btn.setScale(1.0));
+        return btn;
     }
 
     createHUD() {
