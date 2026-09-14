@@ -2,6 +2,84 @@
 // Single static architecture: Preload, Menu, LevelScene (data-driven), LevelComplete, GameOver
 
 // ==========================================================
+// COOKIE & PERSISTENT STORAGE MANAGER
+// Stores High Scores, Numbers, Stats & Progression
+// ==========================================================
+const CookieStorage = {
+    // Sets a cookie with 1-year expiration and mirrors to localStorage
+    set(name, value, days = 365) {
+        try {
+            const valStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
+            const encoded = encodeURIComponent(valStr);
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = `${name}=${encoded}; expires=${expires}; path=/; SameSite=Lax`;
+            if (window.localStorage) {
+                localStorage.setItem(name, valStr);
+            }
+        } catch (e) {
+            console.warn('CookieStorage set error:', e);
+        }
+    },
+
+    // Gets a cookie by name, falls back to localStorage
+    get(name, defaultValue = null) {
+        try {
+            const nameEq = name + '=';
+            const parts = document.cookie.split(';');
+            for (let i = 0; i < parts.length; i++) {
+                let c = parts[i].trim();
+                if (c.indexOf(nameEq) === 0) {
+                    const raw = decodeURIComponent(c.substring(nameEq.length));
+                    try {
+                        return JSON.parse(raw);
+                    } catch {
+                        return raw;
+                    }
+                }
+            }
+            // Fallback to localStorage
+            if (window.localStorage) {
+                const localVal = localStorage.getItem(name);
+                if (localVal !== null) {
+                    try {
+                        return JSON.parse(localVal);
+                    } catch {
+                        return localVal;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('CookieStorage get error:', e);
+        }
+        return defaultValue;
+    },
+
+    getInt(name, defaultValue = 0) {
+        const val = this.get(name, defaultValue);
+        const parsed = parseInt(val, 10);
+        return isNaN(parsed) ? defaultValue : parsed;
+    },
+
+    increment(name, amount = 1) {
+        const current = this.getInt(name, 0);
+        const updated = current + amount;
+        this.set(name, updated);
+        return updated;
+    },
+
+    updateHighScore(name, newScore) {
+        const current = this.getInt(name, 0);
+        if (newScore > current) {
+            this.set(name, newScore);
+            return { isNew: true, score: newScore, prev: current };
+        }
+        return { isNew: false, score: current, prev: current };
+    }
+};
+
+window.CookieStorage = CookieStorage;
+
+// ==========================================================
 // MOBILE & TABLET TACTILE CONTROLS (OUTSIDE CANVAS IN PURPLE SPACE)
 // ==========================================================
 const MobileControls = {
@@ -341,6 +419,27 @@ class MenuScene extends Phaser.Scene {
         helpBtn.on('pointerover', () => helpBtn.setColor('#FFFFFF'));
         helpBtn.on('pointerout', () => helpBtn.setColor('#FFCA28'));
         helpBtn.on('pointerdown', () => this.showHelpModal());
+
+        // Cookie-stored Lifetime Player Stats & High Score Badge
+        const highScore = CookieStorage.getInt('mushik_high_score', 0);
+        const skyBest = CookieStorage.getInt('mushik_skydash_best', 0);
+        const totalModaks = CookieStorage.getInt('mushik_total_modaks', 0);
+        const totalCoins = CookieStorage.getInt('mushik_total_coins', 0);
+
+        const statsBadge = this.add.container(width / 2, 602);
+        const statsBg = this.add.graphics();
+        statsBg.fillStyle(0x180b26, 0.88);
+        statsBg.fillRoundedRect(-330, -20, 660, 40, 20);
+        statsBg.lineStyle(1.5, 0xFFB300, 0.7);
+        statsBg.strokeRoundedRect(-330, -20, 660, 40, 20);
+
+        const statsText = this.add.text(0, 0, `👑 BEST: ${highScore} PTS   •   ✈️ SKY DASH: ${skyBest}   •   🥟 ${totalModaks} MODAKS   •   🪙 ${totalCoins} COINS`, {
+            fontFamily: 'Segoe UI, sans-serif',
+            fontSize: '14.5px',
+            fontStyle: 'bold',
+            color: '#FFD54F'
+        }).setOrigin(0.5);
+        statsBadge.add([statsBg, statsText]);
 
         // Quick footer info
         this.add.text(width / 2, 675, '6 Festival Neighborhoods  •  Collect Modaks & Ganesha Coins  •  Stomp Sneaky Cats  •  Reach the Holy Pandal', {
@@ -718,7 +817,21 @@ class LevelSelectScene extends Phaser.Scene {
             color: '#FFFFFF'
         }).setOrigin(0.5);
 
-        card.add([cardBg, badgeBg, badgeText, diffText, titleText, subText, icon, btnBg, btnText]);
+        // Level Best Score badge from Cookies
+        const lvlBest = CookieStorage.getInt('mushik_best_' + lvl.id, 0);
+        let bestText = null;
+        if (lvlBest > 0) {
+            bestText = this.add.text(-w / 2 + 55, h / 2 - 28, `👑 ${lvlBest} pts`, {
+                fontFamily: 'Segoe UI, sans-serif',
+                fontSize: '13px',
+                fontStyle: 'bold',
+                color: '#FFD54F'
+            }).setOrigin(0, 0.5);
+        }
+
+        const items = [cardBg, badgeBg, badgeText, diffText, titleText, subText, icon, btnBg, btnText];
+        if (bestText) items.push(bestText);
+        card.add(items);
         card.setSize(w, h);
         card.setInteractive({ useHandCursor: true });
 
@@ -751,7 +864,7 @@ class LevelSelectScene extends Phaser.Scene {
 
     createSkyDashCard(x, y, w, h) {
         const card = this.add.container(x, y);
-        const bestScore = parseInt(localStorage.getItem('mushik_skydash_best') || '0', 10);
+        const bestScore = CookieStorage.getInt('mushik_skydash_best', 0);
 
         // Card background: deep aviation navy gradient with neon cyan/gold border
         const cardBg = this.add.graphics();
@@ -1229,10 +1342,11 @@ class LevelScene extends Phaser.Scene {
         });
         this.hudContainer.add(this.modakText);
 
-        // Score display
-        this.scoreText = this.add.text(685, 16, 'SCORE: 0', {
+        // Score & Cookie High Score display
+        this.allTimeBest = CookieStorage.getInt('mushik_high_score', 0);
+        this.scoreText = this.add.text(675, 16, 'SCORE: 0', {
             fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '18px',
+            fontSize: '17px',
             fontStyle: 'bold',
             color: '#FFF275'
         });
@@ -1325,6 +1439,12 @@ class LevelScene extends Phaser.Scene {
         if (this.coinText) this.coinText.setText('x ' + (this.ganeshaCoinCount || 0));
         this.modakText.setText('x ' + this.modakCount);
         this.scoreText.setText('SCORE: ' + this.score);
+
+        // Real-time high score sync to cookies
+        if (this.score > (this.allTimeBest || 0)) {
+            this.allTimeBest = this.score;
+            CookieStorage.set('mushik_high_score', this.score);
+        }
     }
 
     // PAUSE & RESTART MANAGEMENT
@@ -2412,18 +2532,38 @@ class LevelCompleteScene extends Phaser.Scene {
         divLine.lineStyle(2, 0xFFB300, 0.5);
         divLine.lineBetween(width / 2 - 240, 420, width / 2 + 240, 420);
 
-        this.add.text(width / 2 - 240, 445, 'TOTAL SCORE:', {
+        // Save cumulative stats and numbers to cookies
+        CookieStorage.increment('mushik_total_modaks', this.summaryData.modakCount);
+        CookieStorage.increment('mushik_total_coins', coinCount);
+        CookieStorage.increment('mushik_total_cats', this.summaryData.stompedCats);
+        CookieStorage.increment('mushik_games_won', 1);
+
+        // Update Level High Score and Global High Score in cookies
+        const lvlBestRes = CookieStorage.updateHighScore('mushik_best_' + this.summaryData.levelId, this.summaryData.score);
+        const globalBestRes = CookieStorage.updateHighScore('mushik_high_score', this.summaryData.score);
+        const isNewRecord = lvlBestRes.isNew || globalBestRes.isNew;
+
+        this.add.text(width / 2 - 240, 442, 'TOTAL SCORE:', {
             fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '26px',
+            fontSize: '24px',
             fontStyle: 'bold',
             color: '#FFFFFF'
         });
-        this.add.text(width / 2 + 240, 445, `${this.summaryData.score} PTS`, {
+        this.add.text(width / 2 + 240, 442, `${this.summaryData.score} PTS`, {
             fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '28px',
+            fontSize: '26px',
             fontStyle: 'bold',
             color: '#76FF03'
         }).setOrigin(1, 0);
+
+        // Cookie Best Score badge
+        const bestBadgeText = isNewRecord ? '👑 NEW HIGH SCORE RECORD! 👑' : `👑 Level Best: ${lvlBestRes.score} PTS`;
+        this.add.text(width / 2, 480, bestBadgeText, {
+            fontFamily: 'Segoe UI, sans-serif',
+            fontSize: '16px',
+            fontStyle: 'bold',
+            color: isNewRecord ? '#FFD700' : '#B0BEC5'
+        }).setOrigin(0.5);
 
         // NEXT LEVEL / CELEBRATE BUTTON
         const nextBtn = this.add.container(width / 2, 560);
@@ -2528,11 +2668,26 @@ class GameOverScene extends Phaser.Scene {
             color: '#FFCDD2'
         }).setOrigin(0.5);
 
-        this.add.text(width / 2, 330, `Score Accumulated: ${this.score} PTS`, {
+        // Update cookies for games played and all-time high score
+        CookieStorage.increment('mushik_total_games', 1);
+        const globalBestRes = CookieStorage.updateHighScore('mushik_high_score', this.score);
+
+        this.add.text(width / 2, 325, `Score Accumulated: ${this.score} PTS`, {
             fontFamily: 'Trebuchet MS, sans-serif',
             fontSize: '26px',
             fontStyle: 'bold',
             color: '#FFD54F'
+        }).setOrigin(0.5);
+
+        const recordText = globalBestRes.isNew && this.score > 0
+            ? '👑 NEW ALL-TIME HIGH SCORE! 👑'
+            : `👑 All-Time Best: ${globalBestRes.score} PTS`;
+
+        this.add.text(width / 2, 368, recordText, {
+            fontFamily: 'Segoe UI, sans-serif',
+            fontSize: '18px',
+            fontStyle: 'bold',
+            color: globalBestRes.isNew && this.score > 0 ? '#FFD700' : '#CFD8DC'
         }).setOrigin(0.5);
 
         // RETRY BUTTON
@@ -2614,7 +2769,7 @@ class SkyDashScene extends Phaser.Scene {
         const height = 720;
 
         this.score = 0;
-        this.bestScore = parseInt(localStorage.getItem('mushik_skydash_best') || '0', 10);
+        this.bestScore = CookieStorage.getInt('mushik_skydash_best', 0);
         this.gameState = 'READY'; // 'READY', 'PLAYING', 'GAMEOVER'
         this.obstacles = [];
         this.spawnTimer = null;
@@ -3058,11 +3213,11 @@ class SkyDashScene extends Phaser.Scene {
         }
         this.cameras.main.shake(260, 0.015);
 
-        // Best score update
-        const prevBest = parseInt(localStorage.getItem('mushik_skydash_best') || '0', 10);
-        const isNewRecord = this.score > prevBest;
-        const finalBest = Math.max(this.score, prevBest);
-        localStorage.setItem('mushik_skydash_best', finalBest.toString());
+        // Best score & flights update in persistent Cookies
+        CookieStorage.increment('mushik_skydash_flights', 1);
+        const bestRes = CookieStorage.updateHighScore('mushik_skydash_best', this.score);
+        const isNewRecord = bestRes.isNew;
+        const finalBest = bestRes.score;
 
         // Show Game Over Modal after short pause
         this.time.delayedCall(450, () => {
