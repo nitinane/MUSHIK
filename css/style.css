@@ -37,9 +37,11 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: max(0px, env(safe-area-inset-top)) max(0px, env(safe-area-inset-right)) max(0px, env(safe-area-inset-bottom)) max(0px, env(safe-area-inset-left));
+    /* Required padding so the game canvas never touches window borders */
+    padding: clamp(16px, 2.5vw, 32px);
     overflow: hidden;
     touch-action: none;
+    box-sizing: border-box;
 }
 
 #game-container {
@@ -51,6 +53,7 @@ html, body {
     overflow: hidden;
     position: relative;
     touch-action: none;
+    margin: auto;
 }
 
 #game-container canvas {
@@ -58,10 +61,13 @@ html, body {
     max-width: 100% !important;
     max-height: 100% !important;
     object-fit: contain;
+    margin: auto;
+    /* Refined festive golden border and shadow around centered canvas */
+    border: 3px solid rgba(255, 179, 0, 0.55);
+    border-radius: 12px;
     box-shadow: 
-        0 15px 45px rgba(0, 0, 0, 0.85),
-        0 0 35px rgba(255, 179, 0, 0.28);
-    border-radius: 8px;
+        0 20px 60px rgba(0, 0, 0, 0.92),
+        0 0 35px rgba(255, 160, 0, 0.35);
     touch-action: none;
 }
 
@@ -116,32 +122,35 @@ html, body {
 }
 
 .orientation-content p {
-    font-size: 14px;
+    font-size: 15px;
     color: #ECEFF1;
     line-height: 1.5;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
 }
 
-#dismiss-orientation-btn {
-    background: linear-gradient(135deg, #FF5722, #E64A19);
-    color: #FFFFFF;
-    border: 2px solid #FFD54F;
-    border-radius: 24px;
-    padding: 10px 24px;
-    font-size: 15px;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(255, 87, 34, 0.4);
-    transition: transform 0.2s ease, background 0.2s ease;
+.orientation-tips {
+    background: rgba(10, 5, 20, 0.7);
+    border: 1px solid rgba(255, 179, 0, 0.4);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-top: 10px;
+    text-align: left;
+    width: 100%;
 }
 
-#dismiss-orientation-btn:active {
-    transform: scale(0.96);
+.orientation-tips p {
+    font-size: 13.5px;
+    color: #FFF9C4;
+    line-height: 1.4;
+    margin-bottom: 8px;
 }
 
-@media (max-width: 820px) and (orientation: portrait) {
-    body:not(.dismiss-orientation) #orientation-overlay {
-        display: flex;
+.orientation-tips p:last-child {
+    margin-bottom: 0;
+}
+
+@media (orientation: portrait) {
+    #orientation-overlay {
+        display: flex !important;
     }
 }

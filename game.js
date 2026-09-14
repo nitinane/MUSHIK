@@ -752,8 +752,8 @@ class LevelScene extends Phaser.Scene {
             jump: false,
             jumpJustPressed: false
         };
-        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        this.showTouchControls = isTouchDevice || (window.innerWidth <= 1024);
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth <= 1366) || (window.innerHeight <= 850);
+        this.showTouchControls = isTouchDevice;
         this.mobileControlsContainer = null;
     }
 
@@ -2549,29 +2549,36 @@ class SkyDashScene extends Phaser.Scene {
         this.obstacles = [];
         this.spawnTimer = null;
 
-        // Background: Scrolling festive sky
+        // Background: Scrolling festive sky (depth 0)
         this.bg = this.add.tileSprite(width / 2, height / 2, width, height, 'background');
         this.bg.setTint(0x7986CB);
+        this.bg.setDepth(0);
 
-        // Dark gradient overlay for visual clarity
+        // Dark gradient overlay for visual contrast (depth 1)
         this.skyOverlay = this.add.graphics();
         this.skyOverlay.fillGradientStyle(0x050c26, 0x050c26, 0x000000, 0x000000, 0.45);
         this.skyOverlay.fillRect(0, 0, width, height);
+        this.skyOverlay.setDepth(1);
 
-        // Ground decorative strip / border
+        // Ground decorative strip / border (depth 20)
         this.ground = this.add.tileSprite(width / 2, height - 15, width, 30, 'platform');
+        this.ground.setDepth(20);
         this.physics.add.existing(this.ground, true);
 
-        // Obstacle physics group
-        this.obstacleGroup = this.physics.add.group();
+        // Obstacle physics group with strict zero gravity
+        this.obstacleGroup = this.physics.add.group({
+            allowGravity: false,
+            immovable: true
+        });
+        this.lastGapCenter = 350;
 
-        // Player Plane (Mushak in Biplane)
+        // Player Plane: Mushak in Biplane (depth 30)
         this.plane = this.physics.add.sprite(240, 340, 'plane');
         this.plane.setDisplaySize(76, 76);
-        this.plane.body.setSize(48, 34);
-        this.plane.body.setOffset(14, 21);
+        this.plane.body.setSize(44, 30);
+        this.plane.body.setOffset(16, 23);
         this.plane.body.setAllowGravity(false);
-        this.plane.setDepth(20);
+        this.plane.setDepth(30);
 
         // Hover bob tween for READY state
         this.readyTween = this.tweens.add({
@@ -2583,11 +2590,14 @@ class SkyDashScene extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // Top HUD
+        // Top HUD (depth 100)
         this.createHUD();
 
-        // Ready Banner / Instructions
+        // Ready Banner / Instructions (depth 50)
         this.createReadyPrompt();
+
+        // Dedicated Mobile Flap Button (depth 120)
+        this.createMobileFlapButton();
 
         // Controls
         this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -2655,6 +2665,46 @@ class SkyDashScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(100);
     }
 
+    createMobileFlapButton() {
+        // Dedicated on-screen tactile button for mobile touch devices
+        const flapBtn = this.add.container(1170, 600).setDepth(120);
+
+        const bg = this.add.graphics();
+        bg.fillStyle(0x00838F, 0.85);
+        bg.fillCircle(0, 0, 48);
+        bg.lineStyle(3, 0x00E5FF, 1);
+        bg.strokeCircle(0, 0, 48);
+
+        const glow = this.add.graphics();
+        glow.lineStyle(1.5, 0xFFFFFF, 0.4);
+        glow.strokeCircle(0, 0, 44);
+
+        const icon = this.add.text(0, -8, '▲', {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '30px',
+            fontStyle: 'bold',
+            color: '#FFFFFF'
+        }).setOrigin(0.5);
+
+        const label = this.add.text(0, 16, 'FLAP', {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '14px',
+            fontStyle: 'bold',
+            color: '#E0F7FA'
+        }).setOrigin(0.5);
+
+        flapBtn.add([bg, glow, icon, label]);
+        flapBtn.setSize(96, 96);
+        flapBtn.setInteractive(new Phaser.Geom.Circle(0, 0, 48), Phaser.Geom.Circle.Contains);
+
+        flapBtn.on('pointerdown', (pointer) => {
+            flapBtn.setScale(0.92);
+            this.handleFlapInput();
+        });
+        flapBtn.on('pointerup', () => flapBtn.setScale(1.0));
+        flapBtn.on('pointerout', () => flapBtn.setScale(1.0));
+    }
+
     createReadyPrompt() {
         const width = 1280;
         this.readyContainer = this.add.container(width / 2, 450).setDepth(50);
@@ -2672,7 +2722,7 @@ class SkyDashScene extends Phaser.Scene {
             color: '#FFF275'
         }).setOrigin(0.5);
 
-        const promptSub = this.add.text(0, 18, 'Navigate through the festival temple pillars', {
+        const promptSub = this.add.text(0, 18, 'Fly through the warp pipe pillars!', {
             fontFamily: 'Segoe UI, sans-serif',
             fontSize: '15px',
             color: '#E0F7FA'
@@ -2700,6 +2750,7 @@ class SkyDashScene extends Phaser.Scene {
     }
 
     startGame() {
+        if (this.gameState === 'PLAYING') return;
         this.gameState = 'PLAYING';
 
         // Remove ready prompt and ready tween
@@ -2712,7 +2763,9 @@ class SkyDashScene extends Phaser.Scene {
                 targets: this.readyContainer,
                 alpha: 0,
                 duration: 200,
-                onComplete: () => this.readyContainer.destroy()
+                onComplete: () => {
+                    if (this.readyContainer) this.readyContainer.destroy();
+                }
             });
         }
 
@@ -2720,26 +2773,22 @@ class SkyDashScene extends Phaser.Scene {
         this.plane.body.setAllowGravity(true);
         this.plane.body.setGravityY(950);
 
-        // Start spawning obstacles every 1.8s
+        // Spawn first obstacle pair IMMEDIATELY
+        this.spawnObstaclePair();
+
+        // Start repeating spawner timer for subsequent obstacles (1.9s interval)
         this.spawnTimer = this.time.addEvent({
-            delay: 1800,
+            delay: 1900,
             callback: this.spawnObstaclePair,
             callbackScope: this,
             loop: true
-        });
-
-        // Spawn first obstacle after 1.0s
-        this.time.delayedCall(1000, () => {
-            if (this.gameState === 'PLAYING') {
-                this.spawnObstaclePair();
-            }
         });
     }
 
     flap() {
         if (this.gameState !== 'PLAYING') return;
 
-        // Set fixed upward velocity (discrete impulse, not continuous hold)
+        // Discrete flap impulse
         this.plane.setVelocityY(-350);
 
         // Quick tilt nose up
@@ -2751,41 +2800,67 @@ class SkyDashScene extends Phaser.Scene {
     spawnObstaclePair() {
         if (this.gameState !== 'PLAYING') return;
 
-        const spawnX = 1350;
-        const gapHeight = 215; // Generous fair gap
-        // Safe vertical range for gap center
-        const gapCenter = Phaser.Math.Between(180, 520);
-        const gapTop = gapCenter - gapHeight / 2;
-        const gapBottom = gapCenter + gapHeight / 2;
-        const scrollSpeed = -220;
+        const spawnX = 1320;
+        const gapHeight = 250; // Extra generous gap for smooth passage
 
-        // Top Pillar (hangs down from y = 0 to gapTop)
-        const topHeight = Math.max(20, gapTop);
-        const topPillar = this.add.tileSprite(spawnX, topHeight / 2, 70, topHeight, 'brick1');
-        this.physics.add.existing(topPillar);
-        topPillar.body.setImmovable(true);
-        topPillar.body.setAllowGravity(false);
-        topPillar.body.setVelocityX(scrollSpeed);
+        // Smooth gradual height transitions without steep deadends
+        if (!this.lastGapCenter) {
+            this.lastGapCenter = 350;
+        }
+        const minCenter = Math.max(210, this.lastGapCenter - 110);
+        const maxCenter = Math.min(490, this.lastGapCenter + 110);
+        const gapCenter = Phaser.Math.Between(minCenter, maxCenter);
+        this.lastGapCenter = gapCenter;
+
+        const gapTop = Math.round(gapCenter - gapHeight / 2);
+        const gapBottom = Math.round(gapCenter + gapHeight / 2);
+
+        const topHeight = Math.max(40, gapTop);
+        const bottomHeight = Math.max(40, 720 - gapBottom);
+
+        // Top Pillar: warp pipe flipped vertically hanging from ceiling
+        const topPillar = this.physics.add.image(spawnX, topHeight / 2, 'warp_pipe');
+        topPillar.setDisplaySize(72, topHeight);
+        topPillar.setFlipY(true);
+        topPillar.setDepth(15);
         this.obstacleGroup.add(topPillar);
 
-        // Bottom Pillar (rises from gapBottom to screen bottom 720)
-        const bottomHeight = Math.max(20, 720 - gapBottom);
-        const bottomPillar = this.add.tileSprite(spawnX, gapBottom + bottomHeight / 2, 70, bottomHeight, 'brick1');
-        this.physics.add.existing(bottomPillar);
+        // Completely immune to gravity & frozen in vertical position
+        topPillar.body.setSize(66, topHeight);
+        topPillar.body.setImmovable(true);
+        topPillar.body.setAllowGravity(false);
+        topPillar.body.moves = false;
+
+        // Bottom Pillar: warp pipe rising up from bottom
+        const bottomPillar = this.physics.add.image(spawnX, gapBottom + bottomHeight / 2, 'warp_pipe');
+        bottomPillar.setDisplaySize(72, bottomHeight);
+        bottomPillar.setDepth(15);
+        this.obstacleGroup.add(bottomPillar);
+
+        // Completely immune to gravity & frozen in vertical position
+        bottomPillar.body.setSize(66, bottomHeight);
         bottomPillar.body.setImmovable(true);
         bottomPillar.body.setAllowGravity(false);
-        bottomPillar.body.setVelocityX(scrollSpeed);
-        this.obstacleGroup.add(bottomPillar);
+        bottomPillar.body.moves = false;
 
         this.obstacles.push({
             top: topPillar,
             bottom: bottomPillar,
             x: spawnX,
+            topY: topHeight / 2,
+            bottomY: gapBottom + bottomHeight / 2,
             passed: false
         });
     }
 
-    update() {
+    update(time, delta) {
+        // Allow keyboard controls to trigger flap in BOTH READY and PLAYING states
+        if (Phaser.Input.Keyboard.JustDown(this.spaceKey) ||
+            Phaser.Input.Keyboard.JustDown(this.upKey) ||
+            Phaser.Input.Keyboard.JustDown(this.wKey)) {
+            this.handleFlapInput();
+        }
+
         if (this.gameState === 'PLAYING') {
             // Scroll background
             this.bg.tilePositionX += 1.8;
@@ -2793,7 +2868,6 @@ class SkyDashScene extends Phaser.Scene {
 
             // Smooth pitch rotation based on vertical velocity
             const vy = this.plane.body.velocity.y;
-            // Tilted up when rising, gradually tilts down when falling
             const targetRot = Phaser.Math.Clamp(vy * 0.0018, -0.42, 0.72);
             this.plane.rotation = Phaser.Math.Linear(this.plane.rotation, targetRot, 0.12);
 
@@ -2803,24 +2877,34 @@ class SkyDashScene extends Phaser.Scene {
                 return;
             }
 
-            // Check keyboard inputs for discrete flaps
-            if (Phaser.Input.Keyboard.JustDown(this.spaceKey) ||
-                Phaser.Input.Keyboard.JustDown(this.upKey) ||
-                Phaser.Input.Keyboard.JustDown(this.wKey)) {
-                this.handleFlapInput();
-            }
-
-            // Score checking when plane passes obstacle x
+            // Move all active obstacles synchronously every frame
+            const moveDelta = 220 * (delta / 1000);
             for (let i = this.obstacles.length - 1; i >= 0; i--) {
                 const obs = this.obstacles[i];
-                const currentX = obs.top.x;
+                obs.x -= moveDelta;
+                obs.top.x = obs.x;
+                obs.bottom.x = obs.x;
 
-                if (!obs.passed && currentX < this.plane.x) {
+                // Lock Y position so it can NEVER drop or drift
+                obs.top.y = obs.topY;
+                obs.bottom.y = obs.bottomY;
+
+                // Sync physics body positions exactly to the visual sprites
+                if (obs.top.body) {
+                    obs.top.body.position.x = obs.x - obs.top.body.halfWidth;
+                    obs.top.body.position.y = obs.topY - obs.top.body.halfHeight;
+                }
+                if (obs.bottom.body) {
+                    obs.bottom.body.position.x = obs.x - obs.bottom.body.halfWidth;
+                    obs.bottom.body.position.y = obs.bottomY - obs.bottom.body.halfHeight;
+                }
+
+                // Check scoring: when plane's x passes obstacle's x
+                if (!obs.passed && obs.x < this.plane.x) {
                     obs.passed = true;
                     this.score++;
                     this.scoreText.setText(this.score.toString());
 
-                    // Juice score popup animation
                     this.tweens.add({
                         targets: this.scoreText,
                         scale: 1.35,
@@ -2831,8 +2915,8 @@ class SkyDashScene extends Phaser.Scene {
                     if (window.SoundEffects) window.SoundEffects.playModak();
                 }
 
-                // Clean up offscreen obstacles
-                if (currentX < -120) {
+                // Clean up offscreen obstacles once fully past left edge
+                if (obs.x < -100) {
                     obs.top.destroy();
                     obs.bottom.destroy();
                     this.obstacles.splice(i, 1);
@@ -3042,11 +3126,9 @@ window.addEventListener('load', () => {
     window.game = new Phaser.Game(gameConfig);
     window.focus();
 
-    const dismissBtn = document.getElementById('dismiss-orientation-btn');
-    if (dismissBtn) {
-        dismissBtn.addEventListener('click', () => {
-            document.body.classList.add('dismiss-orientation');
-        });
+    // Attempt to lock screen orientation to landscape if supported by browser/device
+    if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {});
     }
 });
 window.addEventListener('click', () => {
