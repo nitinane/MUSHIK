@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Modak Run — Ganesh Chaturthi Platformer</title>
-    <meta name="description" content="Modak Run: Help Mushak leap across festival streets, defeat sneaky cats, collect delicious modaks, and reach Lord Ganesha's Pandal!">
+    <title>MUSHIK: Modak Run — Ganesh Chaturthi Platformer</title>
+    <meta name="description" content="MUSHIK: Modak Run: Help Mushak leap across festival streets, collect Ganesha coins & modaks, defeat sneaky cats, and reach Lord Ganesha's Pandal!">
+    <link rel="icon" type="image/png" href="images/logo.png">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,6 +26,16 @@
 <body>
     <div id="game-wrapper">
         <div id="game-container"></div>
+    </div>
+
+    <!-- Mobile Portrait Orientation Helper -->
+    <div id="orientation-overlay">
+        <div class="orientation-content">
+            <div class="rotate-icon">🔄</div>
+            <h2>ROTATE FOR THE BEST EXPERIENCE</h2>
+            <p>MUSHIK: Modak Run is designed for landscape view. Please turn your device horizontally for full festival view & controls!</p>
+            <button id="dismiss-orientation-btn">Continue Anyway ❯</button>
+        </div>
     </div>
 
     <!-- Game Scripts -->

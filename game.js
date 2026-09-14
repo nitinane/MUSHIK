@@ -79,6 +79,10 @@ class PreloadScene extends Phaser.Scene {
         this.load.image('cheese', 'assets/cheese.png' + v);
         this.load.image('warp_pipe', 'assets/warp_pipe.png' + v);
         this.load.image('ganesh_pandal_image', 'assets/ganesh_pandal_image.png' + v);
+        this.load.image('game_logo', 'assets/logo.png' + v);
+        this.load.image('ganesha_coin', 'assets/ganesha_coin.png' + v);
+        this.load.image('plane', 'assets/plane.png' + v);
+        this.load.image('blast', 'assets/blast.png' + v);
     }
 
     create() {
@@ -108,32 +112,35 @@ class MenuScene extends Phaser.Scene {
         overlay.fillRect(0, 0, width, height);
 
         // Header decorative elements
-        this.add.text(width / 2, 65, '🚩 गणेश चतुर्थी विशेष 🚩', {
+        this.add.text(width / 2, 38, '🚩 श्री गणेशाय नमः • GANESH CHATURTHI FESTIVAL 🚩', {
             fontFamily: 'Segoe UI, sans-serif',
-            fontSize: '22px',
+            fontSize: '20px',
             fontStyle: 'bold',
             color: '#FFB800'
         }).setOrigin(0.5);
 
-        // Big golden game title
-        this.add.text(width / 2, 135, 'MODAK RUN', {
-            fontFamily: 'Trebuchet MS, Impact, sans-serif',
-            fontSize: '78px',
-            fontStyle: '900',
-            color: '#FFF275',
-            stroke: '#8A1C00',
-            strokeThickness: 10,
-            shadow: { offsetX: 4, offsetY: 6, color: '#000000', blur: 8, fill: true }
-        }).setOrigin(0.5);
+        // Official Pixel Art Game Logo ("MUSHIK" with Mushak in padmasana)
+        const logo = this.add.image(width / 2, 175, 'game_logo');
+        logo.setDisplaySize(235, 235);
 
-        // Floating modak icons on sides of title
-        const leftModak = this.add.image(width / 2 - 290, 135, 'modak').setDisplaySize(48, 48);
-        const rightModak = this.add.image(width / 2 + 290, 135, 'modak').setDisplaySize(48, 48);
+        // Floating gentle breathing tween for the logo
+        this.tweens.add({
+            targets: logo,
+            y: 165,
+            duration: 1500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Flanking divine items on sides of logo: Ganesha Coin (left) and Modak (right)
+        const leftCoin = this.add.image(width / 2 - 210, 170, 'ganesha_coin').setDisplaySize(42, 63);
+        const rightModak = this.add.image(width / 2 + 210, 170, 'modak').setDisplaySize(52, 52);
 
         this.tweens.add({
-            targets: [leftModak, rightModak],
+            targets: [leftCoin, rightModak],
             y: '+=12',
-            rotation: 0.15,
+            rotation: 0.12,
             duration: 1200,
             yoyo: true,
             repeat: -1,
@@ -141,27 +148,16 @@ class MenuScene extends Phaser.Scene {
         });
 
         // Subtitle banner
-        this.add.text(width / 2, 205, 'Help Mushak Reach Lord Ganesha\'s Holy Pandal!', {
+        this.add.text(width / 2, 305, 'Help Mushak Reach Lord Ganesha\'s Holy Pandal!', {
             fontFamily: 'Segoe UI, sans-serif',
-            fontSize: '24px',
+            fontSize: '23px',
             color: '#FFFFFF',
             stroke: '#331100',
             strokeThickness: 4
         }).setOrigin(0.5);
 
-        // Animated Mushak character preview
-        const mushakPreview = this.add.image(width / 2, 305, 'standing_mushak');
-        this.tweens.add({
-            targets: mushakPreview,
-            y: 290,
-            duration: 600,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
-
         // MAIN ACTION BUTTON 1: START GAME (Level 1)
-        this.createButton(width / 2, 415, 300, 60, '▶ START GAME', 0xFF5722, 0xFF7043, 0xFFD700, () => {
+        this.createButton(width / 2, 385, 300, 58, '▶ START GAME', 0xFF5722, 0xFF7043, 0xFFD700, () => {
             if (window.SoundEffects) window.SoundEffects.playJump();
             this.cameras.main.fade(300, 0, 0, 0);
             this.time.delayedCall(300, () => {
@@ -170,7 +166,7 @@ class MenuScene extends Phaser.Scene {
         });
 
         // MAIN ACTION BUTTON 2: SELECT LEVEL (Levels Page)
-        this.createButton(width / 2, 495, 300, 60, '🗺️ SELECT LEVEL', 0x6A1B9A, 0x8E24AA, 0xFFD54F, () => {
+        this.createButton(width / 2, 462, 300, 58, '🗺️ SELECT LEVEL', 0x6A1B9A, 0x8E24AA, 0xFFD54F, () => {
             if (window.SoundEffects) window.SoundEffects.playJump();
             this.cameras.main.fade(250, 0, 0, 0);
             this.time.delayedCall(250, () => {
@@ -179,7 +175,7 @@ class MenuScene extends Phaser.Scene {
         });
 
         // ACTION BUTTON 3: HOW TO PLAY MODAL
-        const helpBtn = this.add.text(width / 2, 575, '📖 How to Play & Controls', {
+        const helpBtn = this.add.text(width / 2, 538, '📖 How to Play & Game Rules', {
             fontFamily: 'Segoe UI, sans-serif',
             fontSize: '18px',
             fontStyle: 'bold',
@@ -191,7 +187,7 @@ class MenuScene extends Phaser.Scene {
         helpBtn.on('pointerdown', () => this.showHelpModal());
 
         // Quick footer info
-        this.add.text(width / 2, 675, '5 Festival Neighborhoods  •  Collect Modaks  •  Stomp Sneaky Cats  •  Reach the Holy Pandal', {
+        this.add.text(width / 2, 675, '6 Festival Neighborhoods  •  Collect Modaks & Ganesha Coins  •  Stomp Sneaky Cats  •  Reach the Holy Pandal', {
             fontFamily: 'Segoe UI, sans-serif',
             fontSize: '15px',
             color: '#CFD8DC'
@@ -277,7 +273,8 @@ class MenuScene extends Phaser.Scene {
         const tips = [
             '• Move: Left / Right Arrow Keys or A / D keys',
             '• Jump: Spacebar or Up Arrow / W key (Hold for longer leap)',
-            '• [ ? ] Mystery Blocks: Hit from below to pop CHEESE (1 per level)',
+            '• [ ? ] Mystery Blocks: Hit from below for random CHEESE (1 per level) or GANESHA COINS!',
+            '• 🪙 Ganesha Coin: Sacred divine coin found in mystery blocks (+25 pts)!',
             '• Big Mushak: Eating Cheese makes Mushak huge and grants 1-hit protection!',
             '• Bricks: Big Mushak can smash solid brick blocks from below (+5 pts)',
             '• Cats: Stomp on sneaky cats from above to defeat them (+20 pts) & bounce!',
@@ -285,10 +282,10 @@ class MenuScene extends Phaser.Scene {
         ];
 
         tips.forEach((tip, idx) => {
-            const t = this.add.text(width / 2 - 340, height / 2 - 125 + (idx * 35), tip, {
+            const t = this.add.text(width / 2 - 340, height / 2 - 130 + (idx * 33), tip, {
                 fontFamily: 'Segoe UI, sans-serif',
-                fontSize: '17px',
-                color: '#E0E0E0'
+                fontSize: '16px',
+                color: idx === 2 || idx === 3 ? '#FFE082' : '#E0E0E0'
             });
             container.add(t);
         });
@@ -393,7 +390,7 @@ class LevelSelectScene extends Phaser.Scene {
             color: '#FFD54F'
         }).setOrigin(0.5);
 
-        // Level Cards Data (Levels 1 to 5)
+        // Level Cards Data (Levels 1 to 6)
         const levels = [
             {
                 id: 'level1',
@@ -405,9 +402,9 @@ class LevelSelectScene extends Phaser.Scene {
                 themeColor: 0xE65100,
                 accentColor: 0xFF9800,
                 x: 235,
-                y: 225,
+                y: 175,
                 w: 330,
-                h: 210
+                h: 155
             },
             {
                 id: 'level2',
@@ -419,9 +416,9 @@ class LevelSelectScene extends Phaser.Scene {
                 themeColor: 0xF57F17,
                 accentColor: 0xFFD600,
                 x: 640,
-                y: 225,
+                y: 175,
                 w: 330,
-                h: 210
+                h: 155
             },
             {
                 id: 'level3',
@@ -433,9 +430,9 @@ class LevelSelectScene extends Phaser.Scene {
                 themeColor: 0xC2185B,
                 accentColor: 0xFF4081,
                 x: 1045,
-                y: 225,
+                y: 175,
                 w: 330,
-                h: 210
+                h: 155
             },
             {
                 id: 'level4',
@@ -447,9 +444,9 @@ class LevelSelectScene extends Phaser.Scene {
                 themeColor: 0x4A148C,
                 accentColor: 0xAB47BC,
                 x: 235,
-                y: 475,
+                y: 345,
                 w: 330,
-                h: 210
+                h: 155
             },
             {
                 id: 'level5',
@@ -461,9 +458,9 @@ class LevelSelectScene extends Phaser.Scene {
                 themeColor: 0x004D40,
                 accentColor: 0x00BFA5,
                 x: 640,
-                y: 475,
+                y: 345,
                 w: 330,
-                h: 210
+                h: 155
             },
             {
                 id: 'level6',
@@ -476,9 +473,9 @@ class LevelSelectScene extends Phaser.Scene {
                 themeColor: 0xB71C1C,
                 accentColor: 0xFF1744,
                 x: 1045,
-                y: 475,
+                y: 345,
                 w: 330,
-                h: 210
+                h: 155
             }
         ];
 
@@ -486,8 +483,11 @@ class LevelSelectScene extends Phaser.Scene {
             this.createLevelCard(lvl);
         });
 
+        // Dedicated Sky Dash Bonus Mode Banner Card
+        this.createSkyDashCard(width / 2, 525, 1140, 118);
+
         // Bottom tip
-        this.add.text(width / 2, 680, '✨ All levels are unlocked — click any card to start playing immediately!', {
+        this.add.text(width / 2, 680, '✨ All platformer levels unlocked • Click any level card or take flight in Sky Dash!', {
             fontFamily: 'Segoe UI, sans-serif',
             fontSize: '15px',
             color: '#ECEFF1'
@@ -529,33 +529,33 @@ class LevelSelectScene extends Phaser.Scene {
         }).setOrigin(1, 0.5);
 
         // Level Title
-        const titleText = this.add.text(-w / 2 + 18, -h / 2 + 65, lvl.title, {
+        const titleText = this.add.text(-w / 2 + 18, -h / 2 + 55, lvl.title, {
             fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '21px',
+            fontSize: '20px',
             fontStyle: 'bold',
             color: '#FFFFFF'
         });
 
         // Level Subtitle
-        const subText = this.add.text(-w / 2 + 18, -h / 2 + 96, lvl.subtitle, {
+        const subText = this.add.text(-w / 2 + 18, -h / 2 + 82, lvl.subtitle, {
             fontFamily: 'Segoe UI, sans-serif',
-            fontSize: '14px',
+            fontSize: '13px',
             color: lvl.isBonus ? '#FFAB91' : '#B0BEC5'
         });
 
         // Small modak decorative icon
-        const icon = this.add.image(-w / 2 + 35, -h / 2 + 155, 'modak').setDisplaySize(28, 28);
+        const icon = this.add.image(-w / 2 + 35, h / 2 - 26, 'modak').setDisplaySize(26, 26);
 
         // Play button inside card
         const btnBg = this.add.graphics();
         btnBg.fillStyle(lvl.themeColor, 1);
-        btnBg.fillRoundedRect(w / 2 - 145, h / 2 - 52, 128, 36, 18);
+        btnBg.fillRoundedRect(w / 2 - 140, h / 2 - 44, 124, 32, 16);
         btnBg.lineStyle(2, lvl.isBonus ? 0xFF8A80 : 0xFFD54F, 1);
-        btnBg.strokeRoundedRect(w / 2 - 145, h / 2 - 52, 128, 36, 18);
+        btnBg.strokeRoundedRect(w / 2 - 140, h / 2 - 44, 124, 32, 16);
 
-        const btnText = this.add.text(w / 2 - 81, h / 2 - 34, '▶ PLAY', {
+        const btnText = this.add.text(w / 2 - 78, h / 2 - 28, '▶ PLAY', {
             fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '16px',
+            fontSize: '15px',
             fontStyle: 'bold',
             color: '#FFFFFF'
         }).setOrigin(0.5);
@@ -590,6 +590,120 @@ class LevelSelectScene extends Phaser.Scene {
             });
         });
     }
+
+    createSkyDashCard(x, y, w, h) {
+        const card = this.add.container(x, y);
+        const bestScore = parseInt(localStorage.getItem('mushik_skydash_best') || '0', 10);
+
+        // Card background: deep aviation navy gradient with neon cyan/gold border
+        const cardBg = this.add.graphics();
+        cardBg.fillStyle(0x0a142c, 0.95);
+        cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 20);
+        cardBg.lineStyle(3, 0x00E5FF, 1);
+        cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 20);
+
+        // Mushak Biplane sprite preview on the left
+        const plane = this.add.image(-w / 2 + 65, 0, 'plane');
+        plane.setDisplaySize(76, 76);
+        plane.setRotation(-0.12);
+
+        // Floating bob animation for the biplane
+        this.tweens.add({
+            targets: plane,
+            y: -6,
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Mode badge
+        const badgeBg = this.add.graphics();
+        badgeBg.fillStyle(0x00838F, 1);
+        badgeBg.fillRoundedRect(-w / 2 + 125, -h / 2 + 14, 185, 26, 13);
+
+        const badgeText = this.add.text(-w / 2 + 125 + 92, -h / 2 + 27, '✈️ SPECIAL BONUS MODE', {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '13px',
+            fontStyle: 'bold',
+            color: '#FFFFFF'
+        }).setOrigin(0.5);
+
+        // Main Title
+        const titleText = this.add.text(-w / 2 + 125, -h / 2 + 48, 'SKY DASH: BIPLANE RUN', {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '23px',
+            fontStyle: '900',
+            color: '#00E5FF',
+            stroke: '#002244',
+            strokeThickness: 3
+        });
+
+        // Subtitle
+        const subText = this.add.text(-w / 2 + 125, -h / 2 + 78, 'Flappy Mushak Arcade Challenge • Flap through ancient temple pillars & set the high score!', {
+            fontFamily: 'Segoe UI, sans-serif',
+            fontSize: '14px',
+            color: '#B2EBF2'
+        });
+
+        // Best Score Badge
+        const bestBg = this.add.graphics();
+        bestBg.fillStyle(0x1a237e, 0.9);
+        bestBg.fillRoundedRect(w / 2 - 370, -22, 175, 44, 14);
+        bestBg.lineStyle(2, 0xFFD700, 0.9);
+        bestBg.strokeRoundedRect(w / 2 - 370, -22, 175, 44, 14);
+
+        const bestText = this.add.text(w / 2 - 370 + 87, 0, `👑 BEST: ${bestScore}`, {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '17px',
+            fontStyle: 'bold',
+            color: '#FFD700'
+        }).setOrigin(0.5);
+
+        // Fly Button
+        const btnBg = this.add.graphics();
+        btnBg.fillStyle(0xFF6F00, 1);
+        btnBg.fillRoundedRect(w / 2 - 170, -24, 145, 48, 24);
+        btnBg.lineStyle(2, 0xFFD54F, 1);
+        btnBg.strokeRoundedRect(w / 2 - 170, -24, 145, 48, 24);
+
+        const btnText = this.add.text(w / 2 - 170 + 72, 0, '▶ FLY NOW', {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '18px',
+            fontStyle: 'bold',
+            color: '#FFFFFF'
+        }).setOrigin(0.5);
+
+        card.add([cardBg, plane, badgeBg, badgeText, titleText, subText, bestBg, bestText, btnBg, btnText]);
+        card.setSize(w, h);
+        card.setInteractive({ useHandCursor: true });
+
+        card.on('pointerover', () => {
+            card.setScale(1.02);
+            cardBg.clear();
+            cardBg.fillStyle(0x102550, 0.98);
+            cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 20);
+            cardBg.lineStyle(4, 0x00FFFF, 1);
+            cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 20);
+        });
+
+        card.on('pointerout', () => {
+            card.setScale(1.0);
+            cardBg.clear();
+            cardBg.fillStyle(0x0a142c, 0.95);
+            cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 20);
+            cardBg.lineStyle(3, 0x00E5FF, 1);
+            cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 20);
+        });
+
+        card.on('pointerdown', () => {
+            if (window.SoundEffects) window.SoundEffects.playJump();
+            this.cameras.main.fade(300, 0, 0, 0);
+            this.time.delayedCall(300, () => {
+                this.scene.start('SkyDashScene');
+            });
+        });
+    }
 }
 
 
@@ -609,6 +723,7 @@ class LevelScene extends Phaser.Scene {
         this.lives = 3;
         this.score = 0;
         this.modakCount = 0;
+        this.ganeshaCoinCount = 0;
         this.cheeseCount = 0;
         this.stompedCats = 0;
         this.isBig = false;          // Big Mushak power-up state (Mario mushroom)
@@ -628,6 +743,18 @@ class LevelScene extends Phaser.Scene {
         // Animation timing helper for running sprites
         this.runTimer = 0;
         this.currentRunFrame = 1;
+
+        // Mobile touch controls state & auto-detection
+        this.touchState = {
+            left: false,
+            right: false,
+            down: false,
+            jump: false,
+            jumpJustPressed: false
+        };
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        this.showTouchControls = isTouchDevice || (window.innerWidth <= 1024);
+        this.mobileControlsContainer = null;
     }
 
     create() {
@@ -687,22 +814,20 @@ class LevelScene extends Phaser.Scene {
             });
         }
 
-        let assignedCheese = false;
-        if (config.questionBricks) {
+        if (config.questionBricks && config.questionBricks.length > 0) {
+            // Pick a completely random question block for the single cheese power-up!
+            // Cheese is never guaranteed to be in the first block; it is randomized every run!
+            const randomCheeseIdx = Phaser.Math.Between(0, config.questionBricks.length - 1);
             config.questionBricks.forEach((q, idx) => {
                 const qb = this.blocksGroup.create(q.x, q.y, 'brick_with_questionmark');
                 qb.setDisplaySize(blockSize, blockSize);
                 qb.blockType = 'question';
                 qb.hasItem = true;
-                // STRICT CHEESE RULE: Exactly 1 question block per level drops cheese
-                if (q.dropsCheese && !assignedCheese) {
+                // Exactly 1 randomized brick contains the cheese powerup; all other question bricks contain divine Ganesha Coins!
+                if (idx === randomCheeseIdx) {
                     qb.itemType = 'cheese';
-                    assignedCheese = true;
-                } else if (!assignedCheese && idx === 0 && !config.questionBricks.some(b => b.dropsCheese)) {
-                    qb.itemType = 'cheese';
-                    assignedCheese = true;
                 } else {
-                    qb.itemType = 'modak';
+                    qb.itemType = 'ganesha_coin';
                 }
                 qb.refreshBody(); // Exact 36x36 static body aligned to question block position
             });
@@ -856,7 +981,10 @@ class LevelScene extends Phaser.Scene {
         // 10. HUD Interface
         this.createHUD();
 
-        // 11. Reversed Controls Warning for Level 6 (Rage Round)
+        // 11. Mobile Touch Controls (D-Pad & Jump)
+        this.createMobileControls();
+
+        // 12. Reversed Controls Warning for Level 6 (Rage Round)
         if (config.reversedControls) {
             this.showReversedControlsWarning();
         }
@@ -876,9 +1004,9 @@ class LevelScene extends Phaser.Scene {
         this.hudContainer.add(hudBg);
 
         // Lives label & hearts
-        const livesLabel = this.add.text(24, 16, 'LIVES:', {
+        const livesLabel = this.add.text(20, 16, 'LIVES:', {
             fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '18px',
+            fontSize: '17px',
             fontStyle: 'bold',
             color: '#FFD54F'
         });
@@ -886,17 +1014,17 @@ class LevelScene extends Phaser.Scene {
 
         this.heartIcons = [];
         for (let i = 0; i < 3; i++) {
-            const heart = this.add.text(92 + (i * 28), 14, '❤️', {
-                fontSize: '22px'
+            const heart = this.add.text(82 + (i * 26), 14, '❤️', {
+                fontSize: '20px'
             });
             this.heartIcons.push(heart);
             this.hudContainer.add(heart);
         }
 
         // Big Mushak Power-Up Indicator
-        this.powerBadge = this.add.text(188, 16, '⭐ BIG', {
+        this.powerBadge = this.add.text(172, 16, '⭐ BIG', {
             fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '15px',
+            fontSize: '14px',
             fontStyle: 'bold',
             color: '#FFD700',
             stroke: '#B71C1C',
@@ -906,19 +1034,31 @@ class LevelScene extends Phaser.Scene {
         this.hudContainer.add(this.powerBadge);
 
         // Level Title in center
-        const levelTitle = this.add.text(490, 20, this.config.title || 'LEVEL 1', {
+        const levelTitle = this.add.text(375, 20, this.config.title || 'LEVEL 1', {
             fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '18px',
+            fontSize: '17px',
             fontStyle: 'bold',
             color: '#FFFFFF'
         }).setOrigin(0.5);
         this.hudContainer.add(levelTitle);
 
+        // Ganesha Coin count
+        const coinIcon = this.add.image(495, 28, 'ganesha_coin').setDisplaySize(18, 27);
+        this.hudContainer.add(coinIcon);
+
+        this.coinText = this.add.text(512, 16, 'x 0', {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '18px',
+            fontStyle: 'bold',
+            color: '#FFF275'
+        });
+        this.hudContainer.add(this.coinText);
+
         // Modak count
-        const modakIcon = this.add.image(670, 28, 'modak').setDisplaySize(28, 28);
+        const modakIcon = this.add.image(595, 28, 'modak').setDisplaySize(26, 26);
         this.hudContainer.add(modakIcon);
 
-        this.modakText = this.add.text(692, 16, 'x 0', {
+        this.modakText = this.add.text(615, 16, 'x 0', {
             fontFamily: 'Trebuchet MS, sans-serif',
             fontSize: '18px',
             fontStyle: 'bold',
@@ -927,7 +1067,7 @@ class LevelScene extends Phaser.Scene {
         this.hudContainer.add(this.modakText);
 
         // Score display
-        this.scoreText = this.add.text(780, 16, 'SCORE: 0', {
+        this.scoreText = this.add.text(700, 16, 'SCORE: 0', {
             fontFamily: 'Trebuchet MS, sans-serif',
             fontSize: '18px',
             fontStyle: 'bold',
@@ -935,10 +1075,152 @@ class LevelScene extends Phaser.Scene {
         });
         this.hudContainer.add(this.scoreText);
 
-        // Top bar action buttons: Pause, Restart, Menu
-        this.createTopBarButton(990, 28, 92, 34, '⏸️ Pause', 0x4A148C, 0xCE93D8, () => this.togglePause());
-        this.createTopBarButton(1095, 28, 96, 34, '↺ Restart', 0xB71C1C, 0xEF5350, () => this.restartLevel());
-        this.createTopBarButton(1200, 28, 92, 34, '⌂ Menu', 0x1B5E20, 0x81C784, () => this.scene.start('MenuScene'));
+        // Top bar action buttons: Touch Toggle, Pause, Restart, Menu
+        this.touchBtn = this.createTopBarButton(885, 28, 92, 34, '📱 Touch', 0x00695C, 0x80CBC4, () => this.toggleTouchControls());
+        this.createTopBarButton(985, 28, 88, 34, '⏸️ Pause', 0x4A148C, 0xCE93D8, () => this.togglePause());
+        this.createTopBarButton(1085, 28, 92, 34, '↺ Restart', 0xB71C1C, 0xEF5350, () => this.restartLevel());
+        this.createTopBarButton(1190, 28, 88, 34, '⌂ Menu', 0x1B5E20, 0x81C784, () => this.scene.start('MenuScene'));
+    }
+
+    createMobileControls() {
+        if (this.mobileControlsContainer) {
+            this.mobileControlsContainer.destroy();
+        }
+
+        const container = this.add.container(0, 0);
+        container.setScrollFactor(0);
+        container.setDepth(150); // Above gameplay and parallax tiles
+        this.mobileControlsContainer = container;
+
+        // 1. Left Direction Button (◀)
+        const leftBtn = this.createTouchButton(95, 605, 42, '◀', '', 0x12081c, 0xFFA000, (down) => {
+            this.touchState.left = down;
+        });
+        container.add(leftBtn);
+
+        // 2. Right Direction Button (▶)
+        const rightBtn = this.createTouchButton(205, 605, 42, '▶', '', 0x12081c, 0xFFA000, (down) => {
+            this.touchState.right = down;
+        });
+        container.add(rightBtn);
+
+        // 3. Down / Enter Warp Pipe Button (▼)
+        const downBtn = this.createTouchButton(150, 510, 32, '▼', 'WARP', 0x12081c, 0x76FF03, (down) => {
+            this.touchState.down = down;
+        });
+        container.add(downBtn);
+
+        // 4. Jump Action Button (▲ JUMP)
+        const jumpBtn = this.createTouchButton(1180, 595, 52, '▲', 'JUMP', 0xBF360C, 0xFFD700, (down) => {
+            this.touchState.jump = down;
+            if (down) {
+                this.touchState.jumpJustPressed = true;
+            }
+        });
+        container.add(jumpBtn);
+
+        container.setVisible(this.showTouchControls);
+    }
+
+    createTouchButton(x, y, radius, symbol, label, fillColor, strokeColor, onStateChange) {
+        const btn = this.add.container(x, y);
+
+        // Circular glassmorphism background
+        const bg = this.add.graphics();
+        bg.fillStyle(fillColor, 0.74);
+        bg.fillCircle(0, 0, radius);
+        bg.lineStyle(3, strokeColor, 0.95);
+        bg.strokeCircle(0, 0, radius);
+
+        // Outer glow accent ring
+        const glow = this.add.graphics();
+        glow.lineStyle(1.5, 0xFFFFFF, 0.4);
+        glow.strokeCircle(0, 0, radius - 4);
+
+        const items = [bg, glow];
+
+        if (label) {
+            const sym = this.add.text(0, -9, symbol, {
+                fontFamily: 'Trebuchet MS, sans-serif',
+                fontSize: `${Math.round(radius * 0.65)}px`,
+                fontStyle: 'bold',
+                color: '#FFFFFF'
+            }).setOrigin(0.5);
+
+            const lbl = this.add.text(0, 15, label, {
+                fontFamily: 'Trebuchet MS, sans-serif',
+                fontSize: `${Math.round(radius * 0.3)}px`,
+                fontStyle: 'bold',
+                color: strokeColor === 0x76FF03 ? '#B9F6CA' : '#FFF9C4'
+            }).setOrigin(0.5);
+
+            items.push(sym, lbl);
+        } else {
+            const sym = this.add.text(0, 0, symbol, {
+                fontFamily: 'Trebuchet MS, sans-serif',
+                fontSize: `${Math.round(radius * 0.75)}px`,
+                fontStyle: 'bold',
+                color: '#FFFFFF'
+            }).setOrigin(0.5);
+            items.push(sym);
+        }
+
+        btn.add(items);
+        btn.setSize(radius * 2, radius * 2);
+        btn.setInteractive(new Phaser.Geom.Circle(0, 0, radius), Phaser.Geom.Circle.Contains);
+
+        const setPressedVisuals = (pressed) => {
+            if (pressed) {
+                btn.setScale(0.90);
+                bg.clear();
+                bg.fillStyle(fillColor, 0.95);
+                bg.fillCircle(0, 0, radius);
+                bg.lineStyle(4, 0xFFFFFF, 1);
+                bg.strokeCircle(0, 0, radius);
+            } else {
+                btn.setScale(1.0);
+                bg.clear();
+                bg.fillStyle(fillColor, 0.74);
+                bg.fillCircle(0, 0, radius);
+                bg.lineStyle(3, strokeColor, 0.95);
+                bg.strokeCircle(0, 0, radius);
+            }
+        };
+
+        btn.on('pointerdown', () => {
+            setPressedVisuals(true);
+            onStateChange(true);
+        });
+
+        btn.on('pointerup', () => {
+            setPressedVisuals(false);
+            onStateChange(false);
+        });
+
+        btn.on('pointerout', () => {
+            setPressedVisuals(false);
+            onStateChange(false);
+        });
+
+        return btn;
+    }
+
+    toggleTouchControls() {
+        this.showTouchControls = !this.showTouchControls;
+        if (this.mobileControlsContainer) {
+            this.mobileControlsContainer.setVisible(this.showTouchControls);
+        }
+        if (window.SoundEffects) window.SoundEffects.playModak();
+    }
+
+    resetTouchState() {
+        if (this.touchState) {
+            this.touchState.left = false;
+            this.touchState.right = false;
+            this.touchState.down = false;
+            this.touchState.jump = false;
+            this.touchState.jumpJustPressed = false;
+        }
     }
 
     createTopBarButton(x, y, w, h, text, color, strokeColor, onClick) {
@@ -976,6 +1258,7 @@ class LevelScene extends Phaser.Scene {
             this.heartIcons[i].setText(i < this.lives ? '❤️' : '🖤');
         }
         this.powerBadge.setVisible(this.isBig);
+        if (this.coinText) this.coinText.setText('x ' + (this.ganeshaCoinCount || 0));
         this.modakText.setText('x ' + this.modakCount);
         this.scoreText.setText('SCORE: ' + this.score);
     }
@@ -993,6 +1276,10 @@ class LevelScene extends Phaser.Scene {
     pauseGame() {
         if (this.isPaused || this.isLevelOver) return;
         this.isPaused = true;
+        this.resetTouchState();
+        if (this.mobileControlsContainer) {
+            this.mobileControlsContainer.setVisible(false);
+        }
         this.physics.pause();
 
         const width = 1280;
@@ -1034,7 +1321,7 @@ class LevelScene extends Phaser.Scene {
         }).setOrigin(0.5);
         container.add(lvlTxt);
 
-        const scoreStats = this.add.text(width / 2, height / 2 - 75, `Score: ${this.score}  •  Modaks: ${this.modakCount}`, {
+        const scoreStats = this.add.text(width / 2, height / 2 - 75, `Score: ${this.score}  •  🪙 Coins: ${this.ganeshaCoinCount || 0}  •  Modaks: ${this.modakCount}`, {
             fontFamily: 'Segoe UI, sans-serif',
             fontSize: '16px',
             fontStyle: 'bold',
@@ -1093,14 +1380,19 @@ class LevelScene extends Phaser.Scene {
     resumeGame() {
         if (!this.isPaused) return;
         this.isPaused = false;
+        this.resetTouchState();
         if (this.pauseContainer) {
             this.pauseContainer.destroy();
             this.pauseContainer = null;
+        }
+        if (this.mobileControlsContainer) {
+            this.mobileControlsContainer.setVisible(this.showTouchControls);
         }
         this.physics.resume();
     }
 
     restartLevel() {
+        this.resetTouchState();
         if (window.SoundEffects) window.SoundEffects.playJump();
         if (this.pauseContainer) {
             this.pauseContainer.destroy();
@@ -1210,7 +1502,7 @@ class LevelScene extends Phaser.Scene {
             }
 
             // Down key triggers warp
-            if (cursors.down.isDown || wasd.down.isDown) {
+            if (cursors.down.isDown || wasd.down.isDown || (this.touchState && this.touchState.down)) {
                 this.warpPlayer(standingOnWarp);
                 return;
             }
@@ -1219,8 +1511,9 @@ class LevelScene extends Phaser.Scene {
         }
 
         // --- 2. Horizontal Movement (Reversed in Level 6) ---
-        const rawLeft = cursors.left.isDown || wasd.left.isDown;
-        const rawRight = cursors.right.isDown || wasd.right.isDown;
+        const touch = this.touchState || { left: false, right: false, down: false, jump: false, jumpJustPressed: false };
+        const rawLeft = cursors.left.isDown || wasd.left.isDown || touch.left;
+        const rawRight = cursors.right.isDown || wasd.right.isDown || touch.right;
         const isReversed = !!this.config.reversedControls;
         const isLeft = isReversed ? rawRight : rawLeft;
         const isRight = isReversed ? rawLeft : rawRight;
@@ -1240,8 +1533,12 @@ class LevelScene extends Phaser.Scene {
         const isJumpJustDown = Phaser.Input.Keyboard.JustDown(cursors.up) ||
             Phaser.Input.Keyboard.JustDown(cursors.space) ||
             Phaser.Input.Keyboard.JustDown(wasd.up) ||
-            Phaser.Input.Keyboard.JustDown(wasd.space);
-        const isJumpHeld = cursors.up.isDown || cursors.space.isDown || wasd.up.isDown || wasd.space.isDown;
+            Phaser.Input.Keyboard.JustDown(wasd.space) ||
+            touch.jumpJustPressed;
+        const isJumpHeld = cursors.up.isDown || cursors.space.isDown || wasd.up.isDown || wasd.space.isDown || touch.jump;
+
+        // Reset one-shot touch jump press flag
+        touch.jumpJustPressed = false;
 
         if (isJumpJustDown && onGround) {
             player.setVelocityY(this.jumpVelocity);
@@ -1394,6 +1691,35 @@ class LevelScene extends Phaser.Scene {
                     cheese.body.setCollideWorldBounds(true);
                     // 2. Once emerged, slides horizontally forward along platforms like a Mario mushroom!
                     cheese.setVelocityX(90);
+                }
+            });
+        } else if (block.itemType === 'ganesha_coin') {
+            // Sacred Ganesha Collectible Coin reward!
+            if (window.SoundEffects) window.SoundEffects.playModak();
+            this.score += 25;
+            this.ganeshaCoinCount = (this.ganeshaCoinCount || 0) + 1;
+            this.updateHUD();
+            this.showFloatingText(block.x, block.y - 22, '+25 GANESHA COIN! 🪙', '#FFD700');
+
+            // 3D Coin medallion emerges and spins in air like a classic Mario coin!
+            const popCoin = this.add.image(block.x, block.y - 16, 'ganesha_coin').setDisplaySize(28, 42).setDepth(6);
+            this.tweens.add({
+                targets: popCoin,
+                y: block.y - 68,
+                scaleX: { from: 1.0, to: 0.15 },
+                duration: 380,
+                yoyo: true,
+                repeat: 1,
+                ease: 'Quad.easeOut',
+                onComplete: () => {
+                    this.tweens.add({
+                        targets: popCoin,
+                        y: block.y - 92,
+                        alpha: 0,
+                        duration: 220,
+                        ease: 'Linear',
+                        onComplete: () => popCoin.destroy()
+                    });
                 }
             });
         } else {
@@ -1633,6 +1959,7 @@ class LevelScene extends Phaser.Scene {
         if (this.isLevelOver || this.isRespawning) return;
         this.isRespawning = true;
         this.isBig = false;
+        this.resetTouchState();
         this.setPlayerSprite('standing_mushak');
 
         this.lives -= 1;
@@ -1854,6 +2181,7 @@ class LevelScene extends Phaser.Scene {
             this.scene.start('LevelCompleteScene', {
                 score: this.score,
                 modakCount: this.modakCount,
+                ganeshaCoinCount: this.ganeshaCoinCount || 0,
                 cheeseCount: this.cheeseCount,
                 stompedCats: this.stompedCats,
                 levelId: this.levelId
@@ -1986,24 +2314,27 @@ class LevelCompleteScene extends Phaser.Scene {
         card.strokeRoundedRect(width / 2 - 300, 245, 600, 260, 20);
 
         const modakScore = this.summaryData.modakCount * 10;
+        const coinCount = this.summaryData.ganeshaCoinCount || 0;
+        const coinScore = coinCount * 25;
         const cheeseScore = this.summaryData.cheeseCount * 5;
         const stompScore = this.summaryData.stompedCats * 20;
 
         const statRows = [
             { label: 'Modaks Collected:', val: `${this.summaryData.modakCount}  (+${modakScore} pts)` },
+            { label: '🪙 Ganesha Coins:', val: `${coinCount}  (+${coinScore} pts)` },
             { label: 'Cheeses Eaten:', val: `${this.summaryData.cheeseCount}  (+${cheeseScore} pts)` },
             { label: 'Cats Cleared:', val: `${this.summaryData.stompedCats}  (+${stompScore} pts)` }
         ];
 
         statRows.forEach((row, i) => {
-            this.add.text(width / 2 - 240, 280 + (i * 45), row.label, {
+            this.add.text(width / 2 - 240, 270 + (i * 36), row.label, {
                 fontFamily: 'Segoe UI, sans-serif',
-                fontSize: '20px',
+                fontSize: '18px',
                 color: '#E0E0E0'
             });
-            this.add.text(width / 2 + 240, 280 + (i * 45), row.val, {
+            this.add.text(width / 2 + 240, 270 + (i * 36), row.val, {
                 fontFamily: 'Segoe UI, sans-serif',
-                fontSize: '20px',
+                fontSize: '18px',
                 fontStyle: 'bold',
                 color: '#FFD54F'
             }).setOrigin(1, 0);
@@ -2202,6 +2533,473 @@ class GameOverScene extends Phaser.Scene {
 }
 
 
+// --- 5.5. SKY DASH SCENE (FLAPPY BIRD BONUS MODE) ---
+class SkyDashScene extends Phaser.Scene {
+    constructor() {
+        super('SkyDashScene');
+    }
+
+    create() {
+        const width = 1280;
+        const height = 720;
+
+        this.score = 0;
+        this.bestScore = parseInt(localStorage.getItem('mushik_skydash_best') || '0', 10);
+        this.gameState = 'READY'; // 'READY', 'PLAYING', 'GAMEOVER'
+        this.obstacles = [];
+        this.spawnTimer = null;
+
+        // Background: Scrolling festive sky
+        this.bg = this.add.tileSprite(width / 2, height / 2, width, height, 'background');
+        this.bg.setTint(0x7986CB);
+
+        // Dark gradient overlay for visual clarity
+        this.skyOverlay = this.add.graphics();
+        this.skyOverlay.fillGradientStyle(0x050c26, 0x050c26, 0x000000, 0x000000, 0.45);
+        this.skyOverlay.fillRect(0, 0, width, height);
+
+        // Ground decorative strip / border
+        this.ground = this.add.tileSprite(width / 2, height - 15, width, 30, 'platform');
+        this.physics.add.existing(this.ground, true);
+
+        // Obstacle physics group
+        this.obstacleGroup = this.physics.add.group();
+
+        // Player Plane (Mushak in Biplane)
+        this.plane = this.physics.add.sprite(240, 340, 'plane');
+        this.plane.setDisplaySize(76, 76);
+        this.plane.body.setSize(48, 34);
+        this.plane.body.setOffset(14, 21);
+        this.plane.body.setAllowGravity(false);
+        this.plane.setDepth(20);
+
+        // Hover bob tween for READY state
+        this.readyTween = this.tweens.add({
+            targets: this.plane,
+            y: 320,
+            duration: 900,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Top HUD
+        this.createHUD();
+
+        // Ready Banner / Instructions
+        this.createReadyPrompt();
+
+        // Controls
+        this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.upKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+        this.wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+
+        // Input listener (click or tap anywhere)
+        this.input.on('pointerdown', (pointer) => {
+            // Check if user clicked top-left Exit button
+            if (pointer.x < 190 && pointer.y < 65) return;
+            this.handleFlapInput();
+        });
+
+        // Collision with obstacle group
+        this.physics.add.overlap(this.plane, this.obstacleGroup, () => {
+            this.handleGameOver('obstacle');
+        }, null, this);
+    }
+
+    createHUD() {
+        const width = 1280;
+
+        // Top-left Back to Levels button
+        this.exitBtn = this.add.container(105, 40).setDepth(100);
+        const exitBg = this.add.graphics();
+        exitBg.fillStyle(0x1a0f2e, 0.88);
+        exitBg.fillRoundedRect(-75, -18, 150, 36, 18);
+        exitBg.lineStyle(2, 0xFFB300, 1);
+        exitBg.strokeRoundedRect(-75, -18, 150, 36, 18);
+
+        const exitTxt = this.add.text(0, 0, '← Levels', {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '16px',
+            fontStyle: 'bold',
+            color: '#FFFFFF'
+        }).setOrigin(0.5);
+
+        this.exitBtn.add([exitBg, exitTxt]);
+        this.exitBtn.setSize(150, 36);
+        this.exitBtn.setInteractive({ useHandCursor: true });
+        this.exitBtn.on('pointerdown', () => {
+            if (window.SoundEffects) window.SoundEffects.playJump();
+            this.scene.start('LevelSelectScene');
+        });
+
+        // Current Score in Top Center (Large classic Flappy Bird counter)
+        this.scoreText = this.add.text(width / 2, 45, '0', {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '56px',
+            fontStyle: '900',
+            color: '#FFFFFF',
+            stroke: '#000000',
+            strokeThickness: 7,
+            shadow: { offsetX: 2, offsetY: 3, color: '#000000', blur: 8, fill: true }
+        }).setOrigin(0.5).setDepth(100);
+
+        // Best Score in Top Right
+        this.bestText = this.add.text(width - 130, 40, `👑 BEST: ${this.bestScore}`, {
+            fontFamily: 'Segoe UI, sans-serif',
+            fontSize: '17px',
+            fontStyle: 'bold',
+            color: '#FFD54F',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            padding: { x: 12, y: 6 }
+        }).setOrigin(0.5).setDepth(100);
+    }
+
+    createReadyPrompt() {
+        const width = 1280;
+        this.readyContainer = this.add.container(width / 2, 450).setDepth(50);
+
+        const promptBox = this.add.graphics();
+        promptBox.fillStyle(0x0a1128, 0.88);
+        promptBox.fillRoundedRect(-220, -50, 440, 100, 20);
+        promptBox.lineStyle(2, 0x00E5FF, 1);
+        promptBox.strokeRoundedRect(-220, -50, 440, 100, 20);
+
+        const promptTitle = this.add.text(0, -18, '✈️ TAP OR PRESS SPACE TO FLAP!', {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '20px',
+            fontStyle: 'bold',
+            color: '#FFF275'
+        }).setOrigin(0.5);
+
+        const promptSub = this.add.text(0, 18, 'Navigate through the festival temple pillars', {
+            fontFamily: 'Segoe UI, sans-serif',
+            fontSize: '15px',
+            color: '#E0F7FA'
+        }).setOrigin(0.5);
+
+        this.readyContainer.add([promptBox, promptTitle, promptSub]);
+
+        this.tweens.add({
+            targets: this.readyContainer,
+            scale: 1.05,
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+    }
+
+    handleFlapInput() {
+        if (this.gameState === 'READY') {
+            this.startGame();
+            this.flap();
+        } else if (this.gameState === 'PLAYING') {
+            this.flap();
+        }
+    }
+
+    startGame() {
+        this.gameState = 'PLAYING';
+
+        // Remove ready prompt and ready tween
+        if (this.readyTween) {
+            this.readyTween.stop();
+            this.readyTween = null;
+        }
+        if (this.readyContainer) {
+            this.tweens.add({
+                targets: this.readyContainer,
+                alpha: 0,
+                duration: 200,
+                onComplete: () => this.readyContainer.destroy()
+            });
+        }
+
+        // Enable plane gravity
+        this.plane.body.setAllowGravity(true);
+        this.plane.body.setGravityY(950);
+
+        // Start spawning obstacles every 1.8s
+        this.spawnTimer = this.time.addEvent({
+            delay: 1800,
+            callback: this.spawnObstaclePair,
+            callbackScope: this,
+            loop: true
+        });
+
+        // Spawn first obstacle after 1.0s
+        this.time.delayedCall(1000, () => {
+            if (this.gameState === 'PLAYING') {
+                this.spawnObstaclePair();
+            }
+        });
+    }
+
+    flap() {
+        if (this.gameState !== 'PLAYING') return;
+
+        // Set fixed upward velocity (discrete impulse, not continuous hold)
+        this.plane.setVelocityY(-350);
+
+        // Quick tilt nose up
+        this.plane.setRotation(-0.4);
+
+        if (window.SoundEffects) window.SoundEffects.playJump();
+    }
+
+    spawnObstaclePair() {
+        if (this.gameState !== 'PLAYING') return;
+
+        const spawnX = 1350;
+        const gapHeight = 215; // Generous fair gap
+        // Safe vertical range for gap center
+        const gapCenter = Phaser.Math.Between(180, 520);
+        const gapTop = gapCenter - gapHeight / 2;
+        const gapBottom = gapCenter + gapHeight / 2;
+        const scrollSpeed = -220;
+
+        // Top Pillar (hangs down from y = 0 to gapTop)
+        const topHeight = Math.max(20, gapTop);
+        const topPillar = this.add.tileSprite(spawnX, topHeight / 2, 70, topHeight, 'brick1');
+        this.physics.add.existing(topPillar);
+        topPillar.body.setImmovable(true);
+        topPillar.body.setAllowGravity(false);
+        topPillar.body.setVelocityX(scrollSpeed);
+        this.obstacleGroup.add(topPillar);
+
+        // Bottom Pillar (rises from gapBottom to screen bottom 720)
+        const bottomHeight = Math.max(20, 720 - gapBottom);
+        const bottomPillar = this.add.tileSprite(spawnX, gapBottom + bottomHeight / 2, 70, bottomHeight, 'brick1');
+        this.physics.add.existing(bottomPillar);
+        bottomPillar.body.setImmovable(true);
+        bottomPillar.body.setAllowGravity(false);
+        bottomPillar.body.setVelocityX(scrollSpeed);
+        this.obstacleGroup.add(bottomPillar);
+
+        this.obstacles.push({
+            top: topPillar,
+            bottom: bottomPillar,
+            x: spawnX,
+            passed: false
+        });
+    }
+
+    update() {
+        if (this.gameState === 'PLAYING') {
+            // Scroll background
+            this.bg.tilePositionX += 1.8;
+            this.ground.tilePositionX += 3.5;
+
+            // Smooth pitch rotation based on vertical velocity
+            const vy = this.plane.body.velocity.y;
+            // Tilted up when rising, gradually tilts down when falling
+            const targetRot = Phaser.Math.Clamp(vy * 0.0018, -0.42, 0.72);
+            this.plane.rotation = Phaser.Math.Linear(this.plane.rotation, targetRot, 0.12);
+
+            // Ceiling and Floor collision checks
+            if (this.plane.y < 20 || this.plane.y > 690) {
+                this.handleGameOver('bounds');
+                return;
+            }
+
+            // Check keyboard inputs for discrete flaps
+            if (Phaser.Input.Keyboard.JustDown(this.spaceKey) ||
+                Phaser.Input.Keyboard.JustDown(this.upKey) ||
+                Phaser.Input.Keyboard.JustDown(this.wKey)) {
+                this.handleFlapInput();
+            }
+
+            // Score checking when plane passes obstacle x
+            for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                const obs = this.obstacles[i];
+                const currentX = obs.top.x;
+
+                if (!obs.passed && currentX < this.plane.x) {
+                    obs.passed = true;
+                    this.score++;
+                    this.scoreText.setText(this.score.toString());
+
+                    // Juice score popup animation
+                    this.tweens.add({
+                        targets: this.scoreText,
+                        scale: 1.35,
+                        duration: 120,
+                        yoyo: true
+                    });
+
+                    if (window.SoundEffects) window.SoundEffects.playModak();
+                }
+
+                // Clean up offscreen obstacles
+                if (currentX < -120) {
+                    obs.top.destroy();
+                    obs.bottom.destroy();
+                    this.obstacles.splice(i, 1);
+                }
+            }
+        }
+    }
+
+    handleGameOver(cause) {
+        if (this.gameState === 'GAMEOVER') return;
+        this.gameState = 'GAMEOVER';
+
+        // Stop spawner
+        if (this.spawnTimer) {
+            this.spawnTimer.remove();
+            this.spawnTimer = null;
+        }
+
+        // Freeze plane
+        this.plane.body.setAllowGravity(false);
+        this.plane.setVelocity(0, 0);
+
+        // Stop all moving obstacles
+        this.obstacles.forEach(obs => {
+            if (obs.top && obs.top.body) obs.top.body.setVelocityX(0);
+            if (obs.bottom && obs.bottom.body) obs.bottom.body.setVelocityX(0);
+        });
+
+        // Spawn blast effect
+        const blast = this.add.image(this.plane.x, this.plane.y, 'blast');
+        blast.setDisplaySize(150, 150).setDepth(150);
+        this.plane.setVisible(false);
+
+        this.tweens.add({
+            targets: blast,
+            scale: 1.4,
+            alpha: 0,
+            duration: 450,
+            ease: 'Cubic.easeOut',
+            onComplete: () => blast.destroy()
+        });
+
+        // Sounds & camera shake
+        if (window.SoundEffects) {
+            window.SoundEffects.playBrickBreak();
+            window.SoundEffects.playHurt();
+        }
+        this.cameras.main.shake(260, 0.015);
+
+        // Best score update
+        const prevBest = parseInt(localStorage.getItem('mushik_skydash_best') || '0', 10);
+        const isNewRecord = this.score > prevBest;
+        const finalBest = Math.max(this.score, prevBest);
+        localStorage.setItem('mushik_skydash_best', finalBest.toString());
+
+        // Show Game Over Modal after short pause
+        this.time.delayedCall(450, () => {
+            this.showGameOverModal(isNewRecord, finalBest);
+        });
+    }
+
+    showGameOverModal(isNewRecord, finalBest) {
+        const width = 1280;
+        const height = 720;
+
+        const modal = this.add.container(width / 2, height / 2).setDepth(200);
+
+        // Dim backdrop
+        const dimmer = this.add.graphics();
+        dimmer.fillStyle(0x000000, 0.75);
+        dimmer.fillRect(-width / 2, -height / 2, width, height);
+        dimmer.setInteractive(new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height), Phaser.Geom.Rectangle.Contains);
+        modal.add(dimmer);
+
+        // Card Box
+        const card = this.add.graphics();
+        card.fillStyle(0x130722, 0.96);
+        card.fillRoundedRect(-240, -180, 480, 360, 24);
+        card.lineStyle(3, 0xFF5252, 1);
+        card.strokeRoundedRect(-240, -180, 480, 360, 24);
+        modal.add(card);
+
+        // Header Title
+        const title = this.add.text(0, -135, '💥 CRASH! GAME OVER 💥', {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '26px',
+            fontStyle: '900',
+            color: '#FF5252'
+        }).setOrigin(0.5);
+        modal.add(title);
+
+        // Score display
+        const scoreLabel = this.add.text(0, -75, `SCORE: ${this.score}`, {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '38px',
+            fontStyle: 'bold',
+            color: '#FFFFFF'
+        }).setOrigin(0.5);
+        modal.add(scoreLabel);
+
+        // Best score display
+        const bestLabel = this.add.text(0, -20, isNewRecord ? `🏆 NEW RECORD: ${finalBest}! 🏆` : `👑 BEST SCORE: ${finalBest}`, {
+            fontFamily: 'Segoe UI, sans-serif',
+            fontSize: '20px',
+            fontStyle: 'bold',
+            color: isNewRecord ? '#00E676' : '#FFD54F'
+        }).setOrigin(0.5);
+        modal.add(bestLabel);
+
+        // Retry Button
+        const retryBtn = this.createModalButton(0, 45, 230, 46, '🔄 PLAY AGAIN', 0xFF5722, 0xFF7043, () => {
+            if (window.SoundEffects) window.SoundEffects.playJump();
+            modal.destroy();
+            this.scene.restart();
+        });
+        modal.add(retryBtn);
+
+        // Back to Levels Button
+        const backBtn = this.createModalButton(0, 110, 230, 44, '← BACK TO LEVELS', 0x311B92, 0x4527A0, () => {
+            if (window.SoundEffects) window.SoundEffects.playJump();
+            modal.destroy();
+            this.scene.start('LevelSelectScene');
+        });
+        modal.add(backBtn);
+    }
+
+    createModalButton(x, y, w, h, text, color1, color2, onClick) {
+        const btn = this.add.container(x, y);
+        const bg = this.add.graphics();
+        bg.fillStyle(color1, 1);
+        bg.fillRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+        bg.lineStyle(2, 0xFFD54F, 1);
+        bg.strokeRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+
+        const txt = this.add.text(0, 0, text, {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '17px',
+            fontStyle: 'bold',
+            color: '#FFFFFF'
+        }).setOrigin(0.5);
+
+        btn.add([bg, txt]);
+        btn.setSize(w, h);
+        btn.setInteractive({ useHandCursor: true });
+
+        btn.on('pointerover', () => {
+            btn.setScale(1.05);
+            bg.clear();
+            bg.fillStyle(color2, 1);
+            bg.fillRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+            bg.lineStyle(2, 0xFFEB3B, 1);
+            bg.strokeRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+        });
+        btn.on('pointerout', () => {
+            btn.setScale(1.0);
+            bg.clear();
+            bg.fillStyle(color1, 1);
+            bg.fillRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+            bg.lineStyle(2, 0xFFD54F, 1);
+            bg.strokeRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+        });
+        btn.on('pointerdown', onClick);
+        return btn;
+    }
+}
+
+
 // --- 6. PHASER GAME CONFIGURATION ---
 const gameConfig = {
     type: Phaser.AUTO,
@@ -2222,6 +3020,10 @@ const gameConfig = {
     input: {
         keyboard: {
             target: window
+        },
+        activePointers: 4,
+        touch: {
+            capture: true
         }
     },
     scene: [
@@ -2230,7 +3032,8 @@ const gameConfig = {
         LevelSelectScene,
         LevelScene,
         LevelCompleteScene,
-        GameOverScene
+        GameOverScene,
+        SkyDashScene
     ]
 };
 
@@ -2238,6 +3041,13 @@ const gameConfig = {
 window.addEventListener('load', () => {
     window.game = new Phaser.Game(gameConfig);
     window.focus();
+
+    const dismissBtn = document.getElementById('dismiss-orientation-btn');
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', () => {
+            document.body.classList.add('dismiss-orientation');
+        });
+    }
 });
 window.addEventListener('click', () => {
     window.focus();
@@ -2254,5 +3064,5 @@ window.addEventListener('orientationchange', () => {
         if (window.game && window.game.scale) {
             window.game.scale.refresh();
         }
-    }, 150);
+    }, 200);
 });

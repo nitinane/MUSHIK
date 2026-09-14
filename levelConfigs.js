@@ -215,7 +215,7 @@ window.LevelConfigs = {
         // Sole cheese block in level 2 (dropsCheese: true)
         questionBricks: [
             { x: 456, y: 490, dropsCheese: true },  // Sole cheese mystery in level 2
-            { x: 1450, y: 420, dropsCheese: false },
+            { x: 1450, y: 320, dropsCheese: false },
             { x: 2392, y: 480, dropsCheese: false },
             { x: 3600, y: 490, dropsCheese: false },
             { x: 4650, y: 480, dropsCheese: false },
@@ -325,15 +325,15 @@ window.LevelConfigs = {
             { x: 1480, y: 630 },
             { x: 1516, y: 630 },
             // High brick canopy over high rooftop
-            { x: 2200, y: 390 },
-            { x: 2272, y: 390 },
+            { x: 2200, y: 310 },
+            { x: 2272, y: 310 },
             // Steps before Gap 4
             { x: 3600, y: 630 },
             { x: 3636, y: 630 },
             { x: 3636, y: 594 },
             // Extended canopy
-            { x: 4400, y: 390 },
-            { x: 4472, y: 390 },
+            { x: 4400, y: 310 },
+            { x: 4472, y: 310 },
             { x: 5750, y: 630 },
             { x: 5786, y: 630 },
             { x: 5786, y: 594 }
@@ -342,11 +342,11 @@ window.LevelConfigs = {
         // Sole cheese block in level 3 (dropsCheese: true)
         questionBricks: [
             { x: 486, y: 480, dropsCheese: true }, // Sole cheese mystery in level 3
-            { x: 1300, y: 400, dropsCheese: false },
-            { x: 2236, y: 390, dropsCheese: false },
-            { x: 3350, y: 390, dropsCheese: false },
-            { x: 4436, y: 390, dropsCheese: false },
-            { x: 5600, y: 380, dropsCheese: false }
+            { x: 1300, y: 320, dropsCheese: false },
+            { x: 2236, y: 310, dropsCheese: false },
+            { x: 3350, y: 320, dropsCheese: false },
+            { x: 4436, y: 310, dropsCheese: false },
+            { x: 5600, y: 310, dropsCheese: false }
         ],
 
         // Warp Pipes: includes a linked shortcut tunnel pair!
@@ -482,11 +482,11 @@ window.LevelConfigs = {
         // Sole cheese block in level 4 (dropsCheese: true)
         questionBricks: [
             { x: 456, y: 480, dropsCheese: true }, // Sole cheese mystery in level 4
-            { x: 1400, y: 420, dropsCheese: false },
-            { x: 2400, y: 400, dropsCheese: false },
+            { x: 1400, y: 330, dropsCheese: false },
+            { x: 2400, y: 320, dropsCheese: false },
             { x: 3286, y: 480, dropsCheese: false },
-            { x: 4500, y: 400, dropsCheese: false },
-            { x: 5600, y: 400, dropsCheese: false },
+            { x: 4500, y: 320, dropsCheese: false },
+            { x: 5600, y: 320, dropsCheese: false },
             { x: 6536, y: 480, dropsCheese: false }
         ],
 
@@ -603,23 +603,23 @@ window.LevelConfigs = {
             { x: 1186, y: 630 },
             { x: 1186, y: 594 },
             // Floating brick canopy 1
-            { x: 2200, y: 390 },
-            { x: 2272, y: 390 },
+            { x: 2200, y: 310 },
+            { x: 2272, y: 310 },
             // Stepping pyramid
             { x: 3050, y: 630 },
             { x: 3086, y: 630 },
             { x: 3086, y: 594 },
             { x: 3122, y: 630 },
             // Canopy 2
-            { x: 4200, y: 390 },
-            { x: 4272, y: 390 },
+            { x: 4200, y: 320 },
+            { x: 4272, y: 320 },
             // Stepping pyramid 2
             { x: 5450, y: 630 },
             { x: 5486, y: 630 },
             { x: 5486, y: 594 },
             // Canopy 3
-            { x: 6350, y: 390 },
-            { x: 6422, y: 390 },
+            { x: 6350, y: 320 },
+            { x: 6422, y: 320 },
             // Final gauntlet guard block
             { x: 7600, y: 630 },
             { x: 7600, y: 594 }
@@ -628,13 +628,13 @@ window.LevelConfigs = {
         // Sole cheese block in level 5 (dropsCheese: true)
         questionBricks: [
             { x: 416, y: 470, dropsCheese: true }, // Sole cheese mystery in level 5
-            { x: 1300, y: 400, dropsCheese: false },
-            { x: 2236, y: 390, dropsCheese: false },
-            { x: 3200, y: 390, dropsCheese: false },
-            { x: 4236, y: 390, dropsCheese: false },
-            { x: 5300, y: 390, dropsCheese: false },
-            { x: 6386, y: 390, dropsCheese: false },
-            { x: 7450, y: 400, dropsCheese: false }
+            { x: 1300, y: 320, dropsCheese: false },
+            { x: 2236, y: 310, dropsCheese: false },
+            { x: 3200, y: 320, dropsCheese: false },
+            { x: 4236, y: 320, dropsCheese: false },
+            { x: 5300, y: 320, dropsCheese: false },
+            { x: 6386, y: 320, dropsCheese: false },
+            { x: 7450, y: 320, dropsCheese: false }
         ],
 
         warpPipes: [
@@ -763,10 +763,10 @@ window.LevelConfigs = {
         // Strictly 1 cheese block in Level 6 (dropsCheese: true)
         questionBricks: [
             { x: 456, y: 480, dropsCheese: true },  // Sole cheese in rage round
-            { x: 1550, y: 400, dropsCheese: false },
-            { x: 2600, y: 390, dropsCheese: false },
-            { x: 4850, y: 410, dropsCheese: false },
-            { x: 5950, y: 400, dropsCheese: false }
+            { x: 1550, y: 320, dropsCheese: false },
+            { x: 2600, y: 320, dropsCheese: false },
+            { x: 4850, y: 330, dropsCheese: false },
+            { x: 5950, y: 320, dropsCheese: false }
         ],
 
         // Mandatory Warp Tunnel: Player enters at x=2850, emerges at x=4550 across the 1400px abyss!
