@@ -28,6 +28,37 @@
         <div id="game-container"></div>
     </div>
 
+    <!-- On-Screen Controls for Mobile, Tablet & iPad (Positioned in side purple space) -->
+    <div id="mobile-controls" class="mobile-controls-hidden">
+        <!-- Left Side Controls (Left purple space) -->
+        <div id="mobile-left-cluster">
+            <button id="btn-warp" class="m-btn m-btn-warp" aria-label="Warp Down">
+                <span class="m-icon">▼</span>
+                <span class="m-label">WARP</span>
+            </button>
+            <div class="m-dpad-row">
+                <button id="btn-left" class="m-btn m-btn-dir" aria-label="Move Left">
+                    <span class="m-icon">◀</span>
+                </button>
+                <button id="btn-right" class="m-btn m-btn-dir" aria-label="Move Right">
+                    <span class="m-icon">▶</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Side Controls (Right purple space) -->
+        <div id="mobile-right-cluster">
+            <button id="btn-jump" class="m-btn m-btn-jump" aria-label="Jump">
+                <span class="m-icon">▲</span>
+                <span class="m-label">JUMP</span>
+            </button>
+            <button id="btn-flap" class="m-btn m-btn-flap" aria-label="Flap Flight" style="display: none;">
+                <span class="m-icon">▲</span>
+                <span class="m-label">FLAP</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Mobile Portrait Orientation Helper -->
     <div id="orientation-overlay">
         <div class="orientation-content">

@@ -1,6 +1,160 @@
 // Modak Run - Main Game Architecture & Scene Implementations
 // Single static architecture: Preload, Menu, LevelScene (data-driven), LevelComplete, GameOver
 
+// ==========================================================
+// MOBILE & TABLET TACTILE CONTROLS (OUTSIDE CANVAS IN PURPLE SPACE)
+// ==========================================================
+const MobileControls = {
+    activeScene: null,
+    mode: 'none',
+
+    isMobileOrTablet() {
+        const ua = navigator.userAgent || '';
+        // iPads report MacIntel with multi-touch points on modern iOS
+        const isIpadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+        const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(ua) || isIpadOS;
+
+        const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const hasCoarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        const canHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+
+        // Tablet / Mobile / iPad:
+        if (isMobileUA) return true;
+        if (hasTouch && hasCoarse && !canHover) return true;
+        return false;
+    },
+
+    init() {
+        this.container = document.getElementById('mobile-controls');
+        this.leftCluster = document.getElementById('mobile-left-cluster');
+        this.rightCluster = document.getElementById('mobile-right-cluster');
+        this.btnWarp = document.getElementById('btn-warp');
+        this.btnLeft = document.getElementById('btn-left');
+        this.btnRight = document.getElementById('btn-right');
+        this.btnJump = document.getElementById('btn-jump');
+        this.btnFlap = document.getElementById('btn-flap');
+
+        if (!this.container) return;
+
+        if (this.isMobileOrTablet()) {
+            document.body.classList.add('touch-controls-active');
+        } else {
+            document.body.classList.remove('touch-controls-active');
+            this.hide();
+            return;
+        }
+
+        const bindBtn = (btn, onDown, onUp) => {
+            if (!btn) return;
+            const press = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                btn.classList.add('pressed');
+                onDown();
+            };
+            const release = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                btn.classList.remove('pressed');
+                onUp();
+            };
+            btn.addEventListener('touchstart', press, { passive: false });
+            btn.addEventListener('touchend', release, { passive: false });
+            btn.addEventListener('touchcancel', release, { passive: false });
+            btn.addEventListener('pointerdown', press);
+            btn.addEventListener('pointerup', release);
+            btn.addEventListener('pointercancel', release);
+            btn.addEventListener('pointerleave', release);
+        };
+
+        bindBtn(this.btnLeft,
+            () => { if (this.activeScene && this.activeScene.touchState) this.activeScene.touchState.left = true; },
+            () => { if (this.activeScene && this.activeScene.touchState) this.activeScene.touchState.left = false; }
+        );
+
+        bindBtn(this.btnRight,
+            () => { if (this.activeScene && this.activeScene.touchState) this.activeScene.touchState.right = true; },
+            () => { if (this.activeScene && this.activeScene.touchState) this.activeScene.touchState.right = false; }
+        );
+
+        bindBtn(this.btnWarp,
+            () => { if (this.activeScene && this.activeScene.touchState) this.activeScene.touchState.down = true; },
+            () => { if (this.activeScene && this.activeScene.touchState) this.activeScene.touchState.down = false; }
+        );
+
+        bindBtn(this.btnJump,
+            () => {
+                if (this.activeScene && this.activeScene.touchState) {
+                    this.activeScene.touchState.jump = true;
+                    this.activeScene.touchState.jumpJustPressed = true;
+                }
+            },
+            () => { if (this.activeScene && this.activeScene.touchState) this.activeScene.touchState.jump = false; }
+        );
+
+        bindBtn(this.btnFlap,
+            () => {
+                if (this.activeScene && this.activeScene.handleFlapInput) {
+                    this.activeScene.handleFlapInput();
+                }
+            },
+            () => {}
+        );
+    },
+
+    setLevelScene(scene) {
+        this.activeScene = scene;
+        this.mode = 'platformer';
+        if (!this.isMobileOrTablet()) {
+            this.hide();
+            return;
+        }
+        if (this.container) this.container.classList.remove('mobile-controls-hidden');
+        if (this.leftCluster) this.leftCluster.style.display = 'flex';
+        if (this.rightCluster) this.rightCluster.style.display = 'flex';
+        if (this.btnJump) this.btnJump.style.display = 'flex';
+        if (this.btnFlap) this.btnFlap.style.display = 'none';
+    },
+
+    setSkyDashScene(scene) {
+        this.activeScene = scene;
+        this.mode = 'skydash';
+        if (!this.isMobileOrTablet()) {
+            this.hide();
+            return;
+        }
+        if (this.container) this.container.classList.remove('mobile-controls-hidden');
+        if (this.leftCluster) this.leftCluster.style.display = 'none';
+        if (this.rightCluster) this.rightCluster.style.display = 'flex';
+        if (this.btnJump) this.btnJump.style.display = 'none';
+        if (this.btnFlap) this.btnFlap.style.display = 'flex';
+    },
+
+    hide() {
+        this.activeScene = null;
+        this.mode = 'none';
+        if (this.container) this.container.classList.add('mobile-controls-hidden');
+    },
+
+    toggle() {
+        if (!this.container) return;
+        const isHidden = this.container.classList.contains('mobile-controls-hidden');
+        if (isHidden) {
+            if (this.mode === 'platformer') this.setLevelScene(this.activeScene);
+            else if (this.mode === 'skydash') this.setSkyDashScene(this.activeScene);
+        } else {
+            this.container.classList.add('mobile-controls-hidden');
+        }
+    }
+};
+
+window.MobileControls = MobileControls;
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => MobileControls.init());
+} else {
+    MobileControls.init();
+}
+
 // --- 1. PRELOAD SCENE ---
 class PreloadScene extends Phaser.Scene {
     constructor() {
@@ -100,6 +254,8 @@ class MenuScene extends Phaser.Scene {
     create() {
         const width = 1280;
         const height = 720;
+
+        if (window.MobileControls) window.MobileControls.hide();
 
         // Festive background
         const bg = this.add.image(width / 2, height / 2, 'background');
@@ -323,6 +479,8 @@ class LevelSelectScene extends Phaser.Scene {
     create() {
         const width = 1280;
         const height = 720;
+
+        if (window.MobileControls) window.MobileControls.hide();
 
         // Festive background with rich deep purple overlay
         const bg = this.add.image(width / 2, height / 2, 'background');
@@ -981,8 +1139,13 @@ class LevelScene extends Phaser.Scene {
         // 10. HUD Interface
         this.createHUD();
 
-        // 11. Mobile Touch Controls (D-Pad & Jump)
-        this.createMobileControls();
+        // 11. Connect Tactile Side Controls (Positioned in side purple space for iPad/Tablet/Mobile)
+        if (window.MobileControls) {
+            window.MobileControls.setLevelScene(this);
+        }
+        this.events.once('shutdown', () => {
+            if (window.MobileControls) window.MobileControls.hide();
+        });
 
         // 12. Reversed Controls Warning for Level 6 (Rage Round)
         if (config.reversedControls) {
@@ -1075,12 +1238,21 @@ class LevelScene extends Phaser.Scene {
         });
         this.hudContainer.add(this.scoreText);
 
-        // Top bar action buttons: Fullscreen, Touch Toggle, Pause, Restart, Menu
-        this.createTopBarButton(785, 28, 76, 34, '⛶ Full', 0x1A237E, 0x5C6BC0, () => this.toggleFullscreen());
-        this.touchBtn = this.createTopBarButton(880, 28, 88, 34, '📱 Touch', 0x00695C, 0x80CBC4, () => this.toggleTouchControls());
-        this.createTopBarButton(975, 28, 86, 34, '⏸️ Pause', 0x4A148C, 0xCE93D8, () => this.togglePause());
-        this.createTopBarButton(1075, 28, 90, 34, '↺ Restart', 0xB71C1C, 0xEF5350, () => this.restartLevel());
-        this.createTopBarButton(1180, 28, 86, 34, '⌂ Menu', 0x1B5E20, 0x81C784, () => this.scene.start('MenuScene'));
+        // Top bar action buttons: Fullscreen, Touch Toggle (mobile/tablet only), Pause, Restart, Menu
+        const isTouch = window.MobileControls && window.MobileControls.isMobileOrTablet();
+        if (isTouch) {
+            this.createTopBarButton(785, 28, 76, 34, '⛶ Full', 0x1A237E, 0x5C6BC0, () => this.toggleFullscreen());
+            this.touchBtn = this.createTopBarButton(880, 28, 88, 34, '📱 Touch', 0x00695C, 0x80CBC4, () => this.toggleTouchControls());
+            this.createTopBarButton(975, 28, 86, 34, '⏸️ Pause', 0x4A148C, 0xCE93D8, () => this.togglePause());
+            this.createTopBarButton(1075, 28, 90, 34, '↺ Restart', 0xB71C1C, 0xEF5350, () => this.restartLevel());
+            this.createTopBarButton(1180, 28, 86, 34, '⌂ Menu', 0x1B5E20, 0x81C784, () => this.scene.start('MenuScene'));
+        } else {
+            // Laptop / Desktop layout: no touch buttons
+            this.createTopBarButton(880, 28, 86, 34, '⛶ Full', 0x1A237E, 0x5C6BC0, () => this.toggleFullscreen());
+            this.createTopBarButton(980, 28, 86, 34, '⏸️ Pause', 0x4A148C, 0xCE93D8, () => this.togglePause());
+            this.createTopBarButton(1080, 28, 90, 34, '↺ Restart', 0xB71C1C, 0xEF5350, () => this.restartLevel());
+            this.createTopBarButton(1185, 28, 86, 34, '⌂ Menu', 0x1B5E20, 0x81C784, () => this.scene.start('MenuScene'));
+        }
     }
 
     toggleFullscreen() {
@@ -1100,134 +1272,8 @@ class LevelScene extends Phaser.Scene {
         }
     }
 
-    createMobileControls() {
-        if (this.mobileControlsContainer) {
-            this.mobileControlsContainer.destroy();
-        }
-
-        const container = this.add.container(0, 0);
-        container.setScrollFactor(0);
-        container.setDepth(150); // Above gameplay and parallax tiles
-        this.mobileControlsContainer = container;
-
-        // 1. Left Direction Button (◀)
-        const leftBtn = this.createTouchButton(95, 605, 42, '◀', '', 0x12081c, 0xFFA000, (down) => {
-            this.touchState.left = down;
-        });
-        container.add(leftBtn);
-
-        // 2. Right Direction Button (▶)
-        const rightBtn = this.createTouchButton(205, 605, 42, '▶', '', 0x12081c, 0xFFA000, (down) => {
-            this.touchState.right = down;
-        });
-        container.add(rightBtn);
-
-        // 3. Down / Enter Warp Pipe Button (▼)
-        const downBtn = this.createTouchButton(150, 510, 32, '▼', 'WARP', 0x12081c, 0x76FF03, (down) => {
-            this.touchState.down = down;
-        });
-        container.add(downBtn);
-
-        // 4. Jump Action Button (▲ JUMP)
-        const jumpBtn = this.createTouchButton(1180, 595, 52, '▲', 'JUMP', 0xBF360C, 0xFFD700, (down) => {
-            this.touchState.jump = down;
-            if (down) {
-                this.touchState.jumpJustPressed = true;
-            }
-        });
-        container.add(jumpBtn);
-
-        container.setVisible(this.showTouchControls);
-    }
-
-    createTouchButton(x, y, radius, symbol, label, fillColor, strokeColor, onStateChange) {
-        const btn = this.add.container(x, y);
-
-        // Circular glassmorphism background
-        const bg = this.add.graphics();
-        bg.fillStyle(fillColor, 0.74);
-        bg.fillCircle(0, 0, radius);
-        bg.lineStyle(3, strokeColor, 0.95);
-        bg.strokeCircle(0, 0, radius);
-
-        // Outer glow accent ring
-        const glow = this.add.graphics();
-        glow.lineStyle(1.5, 0xFFFFFF, 0.4);
-        glow.strokeCircle(0, 0, radius - 4);
-
-        const items = [bg, glow];
-
-        if (label) {
-            const sym = this.add.text(0, -9, symbol, {
-                fontFamily: 'Trebuchet MS, sans-serif',
-                fontSize: `${Math.round(radius * 0.65)}px`,
-                fontStyle: 'bold',
-                color: '#FFFFFF'
-            }).setOrigin(0.5);
-
-            const lbl = this.add.text(0, 15, label, {
-                fontFamily: 'Trebuchet MS, sans-serif',
-                fontSize: `${Math.round(radius * 0.3)}px`,
-                fontStyle: 'bold',
-                color: strokeColor === 0x76FF03 ? '#B9F6CA' : '#FFF9C4'
-            }).setOrigin(0.5);
-
-            items.push(sym, lbl);
-        } else {
-            const sym = this.add.text(0, 0, symbol, {
-                fontFamily: 'Trebuchet MS, sans-serif',
-                fontSize: `${Math.round(radius * 0.75)}px`,
-                fontStyle: 'bold',
-                color: '#FFFFFF'
-            }).setOrigin(0.5);
-            items.push(sym);
-        }
-
-        btn.add(items);
-        btn.setSize(radius * 2, radius * 2);
-        btn.setInteractive(new Phaser.Geom.Circle(0, 0, radius), Phaser.Geom.Circle.Contains);
-
-        const setPressedVisuals = (pressed) => {
-            if (pressed) {
-                btn.setScale(0.90);
-                bg.clear();
-                bg.fillStyle(fillColor, 0.95);
-                bg.fillCircle(0, 0, radius);
-                bg.lineStyle(4, 0xFFFFFF, 1);
-                bg.strokeCircle(0, 0, radius);
-            } else {
-                btn.setScale(1.0);
-                bg.clear();
-                bg.fillStyle(fillColor, 0.74);
-                bg.fillCircle(0, 0, radius);
-                bg.lineStyle(3, strokeColor, 0.95);
-                bg.strokeCircle(0, 0, radius);
-            }
-        };
-
-        btn.on('pointerdown', () => {
-            setPressedVisuals(true);
-            onStateChange(true);
-        });
-
-        btn.on('pointerup', () => {
-            setPressedVisuals(false);
-            onStateChange(false);
-        });
-
-        btn.on('pointerout', () => {
-            setPressedVisuals(false);
-            onStateChange(false);
-        });
-
-        return btn;
-    }
-
     toggleTouchControls() {
-        this.showTouchControls = !this.showTouchControls;
-        if (this.mobileControlsContainer) {
-            this.mobileControlsContainer.setVisible(this.showTouchControls);
-        }
+        if (window.MobileControls) window.MobileControls.toggle();
         if (window.SoundEffects) window.SoundEffects.playModak();
     }
 
@@ -2276,6 +2322,8 @@ class LevelCompleteScene extends Phaser.Scene {
         const width = 1280;
         const height = 720;
 
+        if (window.MobileControls) window.MobileControls.hide();
+
         const bg = this.add.image(width / 2, height / 2, 'background');
         bg.setDisplaySize(width, height);
         bg.setTint(0x553322);
@@ -2455,6 +2503,8 @@ class GameOverScene extends Phaser.Scene {
         const width = 1280;
         const height = 720;
 
+        if (window.MobileControls) window.MobileControls.hide();
+
         const bg = this.add.image(width / 2, height / 2, 'background');
         bg.setDisplaySize(width, height);
         bg.setTint(0x331111);
@@ -2616,13 +2666,31 @@ class SkyDashScene extends Phaser.Scene {
         // Ready Banner / Instructions (depth 50)
         this.createReadyPrompt();
 
-        // Dedicated Mobile Flap Button (depth 120)
-        this.createMobileFlapButton();
+        // Connect tactile side controls for iPad / Tablet / Mobile
+        if (window.MobileControls) {
+            window.MobileControls.setSkyDashScene(this);
+        }
 
-        // Controls
+        // Keyboard Controls: Space, Up Arrow, W (active via Phaser and window keydown)
         this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
         this.upKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
         this.wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+
+        // Global window keyboard handler to guarantee laptop keyboard controls work 100% reliably
+        this.handleSkyDashKeyDown = (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW' || e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                e.preventDefault();
+                this.handleFlapInput();
+            } else if (this.gameState === 'GAMEOVER' && (e.code === 'KeyR' || e.key === 'r' || e.key === 'R' || e.code === 'Enter' || e.code === 'Space')) {
+                e.preventDefault();
+                this.scene.restart();
+            }
+        };
+        window.addEventListener('keydown', this.handleSkyDashKeyDown);
+        this.events.once('shutdown', () => {
+            window.removeEventListener('keydown', this.handleSkyDashKeyDown);
+            if (window.MobileControls) window.MobileControls.hide();
+        });
 
         // Input listener (click or tap anywhere)
         this.input.on('pointerdown', (pointer) => {
@@ -2727,46 +2795,6 @@ class SkyDashScene extends Phaser.Scene {
         }
     }
 
-    createMobileFlapButton() {
-        // Dedicated on-screen tactile button for mobile touch devices
-        const flapBtn = this.add.container(1170, 600).setDepth(120);
-
-        const bg = this.add.graphics();
-        bg.fillStyle(0x00838F, 0.85);
-        bg.fillCircle(0, 0, 48);
-        bg.lineStyle(3, 0x00E5FF, 1);
-        bg.strokeCircle(0, 0, 48);
-
-        const glow = this.add.graphics();
-        glow.lineStyle(1.5, 0xFFFFFF, 0.4);
-        glow.strokeCircle(0, 0, 44);
-
-        const icon = this.add.text(0, -8, '▲', {
-            fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '30px',
-            fontStyle: 'bold',
-            color: '#FFFFFF'
-        }).setOrigin(0.5);
-
-        const label = this.add.text(0, 16, 'FLAP', {
-            fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '14px',
-            fontStyle: 'bold',
-            color: '#E0F7FA'
-        }).setOrigin(0.5);
-
-        flapBtn.add([bg, glow, icon, label]);
-        flapBtn.setSize(96, 96);
-        flapBtn.setInteractive(new Phaser.Geom.Circle(0, 0, 48), Phaser.Geom.Circle.Contains);
-
-        flapBtn.on('pointerdown', (pointer) => {
-            flapBtn.setScale(0.92);
-            this.handleFlapInput();
-        });
-        flapBtn.on('pointerup', () => flapBtn.setScale(1.0));
-        flapBtn.on('pointerout', () => flapBtn.setScale(1.0));
-    }
-
     createReadyPrompt() {
         const width = 1280;
         this.readyContainer = this.add.container(width / 2, 450).setDepth(50);
@@ -2849,6 +2877,10 @@ class SkyDashScene extends Phaser.Scene {
 
     flap() {
         if (this.gameState !== 'PLAYING') return;
+
+        const now = Date.now();
+        if (this.lastFlapTime && now - this.lastFlapTime < 80) return;
+        this.lastFlapTime = now;
 
         // Discrete flap impulse
         this.plane.setVelocityY(-350);
