@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MUSHIK: Lava Climb</title>
+    <meta name="description" content="MUSHIK Lava Climb — Infinite vertical survival platformer. Help Mushak escape the rising lava!">
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box; margin: 0; padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none; -webkit-user-select: none;
+        }
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: #04000e;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            touch-action: none;
+        }
+        #game-wrapper {
+            position: fixed; inset: 0;
+            display: flex; justify-content: center; align-items: center;
+            background: radial-gradient(ellipse at 50% 30%, rgba(80,0,160,0.18) 0%, transparent 70%), #04000e;
+        }
+        #gameCanvas {
+            position: absolute;
+            display: block;
+            touch-action: none;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            cursor: default;
+        }
+        /* UI overlay (modals) */
+        #ui-overlay {
+            position: absolute; inset: 0;
+            z-index: 20;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-card {
+            background: rgba(6, 1, 20, 0.96);
+            border: 2px solid #FF5252;
+            border-radius: 22px;
+            padding: 22px 26px;
+            text-align: center;
+            color: #fff;
+            min-width: 240px;
+            max-width: 295px;
+            pointer-events: auto;
+            box-shadow: 0 0 60px rgba(255,80,80,0.3), 0 20px 60px rgba(0,0,0,0.85);
+        }
+        .modal-card.ready {
+            border-color: #FF9800;
+            box-shadow: 0 0 60px rgba(255,152,0,0.3), 0 20px 60px rgba(0,0,0,0.85);
+        }
+        .modal-title {
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .modal-sub {
+            font-size: 12px;
+            color: #78909C;
+            line-height: 1.55;
+            margin-bottom: 4px;
+        }
+        .score-big {
+            font-size: 56px;
+            font-weight: 900;
+            color: #FFD54F;
+            line-height: 1;
+            margin: 8px 0 4px;
+            text-shadow: 0 0 24px rgba(255,213,79,0.45);
+        }
+        .best-line {
+            font-size: 13px;
+            color: #CE93D8;
+            margin-bottom: 18px;
+        }
+        .btn-row { display: flex; gap: 9px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+        .lc-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 10px 22px;
+            border-radius: 50px;
+            font-size: 14.5px; font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            border: none; cursor: pointer;
+            touch-action: manipulation;
+            transition: transform 0.09s, filter 0.09s;
+            min-height: 42px;
+        }
+        .lc-btn:active { transform: scale(0.93); filter: brightness(1.25); }
+        .btn-fire {
+            background: linear-gradient(135deg, #FF4500, #FF8C00);
+            color: #fff;
+            box-shadow: 0 4px 22px rgba(255,69,0,0.5);
+        }
+        .btn-ghost {
+            background: rgba(255,255,255,0.08);
+            color: #90A4AE;
+            border: 1px solid rgba(144,164,174,0.35);
+            font-size: 12.5px;
+            padding: 8px 16px;
+        }
+        .hint-pulse {
+            font-size: 12.5px;
+            color: #FF9800;
+            margin-top: 13px;
+            animation: lc-blink 1.15s ease-in-out infinite;
+        }
+        @keyframes lc-blink { 0%,100%{opacity:0.35} 50%{opacity:1} }
+        /* Lava danger glow at screen bottom */
+        #lava-glow {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 50px;
+            background: linear-gradient(transparent, rgba(255,60,0,0.55));
+            pointer-events: none; z-index: 15; opacity: 0;
+            transition: opacity 0.18s;
+        }
+        /* World flash */
+        #world-flash {
+            position: absolute; inset: 0;
+            background: rgba(255,255,255,0.75);
+            pointer-events: none; z-index: 18;
+            opacity: 0;
+        }
+        /* Touch prompt indicators */
+        .touch-indicators {
+            position: absolute;
+            bottom: 18px;
+            left: 0; right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0.45;
+        }
+        .touch-pill {
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: #fff;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        /* Landscape warning */
+        #landscape-notice {
+            display: none;
+            position: fixed; inset: 0;
+            background: #04000e;
+            z-index: 99999;
+            flex-direction: column;
+            justify-content: center; align-items: center;
+            color: #fff; text-align: center; gap: 12px; padding: 30px;
+        }
+        #landscape-notice .ln-icon { font-size: 50px; }
+        #landscape-notice h2 { font-size: 17px; font-weight: 900; color: #FFD54F; }
+        #landscape-notice p  { font-size: 12.5px; color: #78909C; }
+        @media (orientation: landscape) and (max-height: 500px) {
+            #landscape-notice { display: flex !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui-overlay"></div>
+    <div id="lava-glow"></div>
+    <div id="world-flash"></div>
+    <div id="touch-hints" class="touch-indicators">
+        <div class="touch-pill">◀ JUMP LEFT</div>
+        <div class="touch-pill">JUMP RIGHT ▶</div>
+    </div>
+</div>
+
+<div id="landscape-notice">
+    <div class="ln-icon">🔄</div>
+    <h2>ROTATE TO PORTRAIT</h2>
+    <p>MUSHIK: Lava Climb is designed for portrait mode!</p>
+</div>
+
+<script>
+'use strict';
+/* ====================================================================
+   MUSHIK: LAVA CLIMB
+   Pure HTML5 Canvas + Vanilla JavaScript — No Game Engine
+   Portrait 9:16  |  360 × 640 logical units
+   ==================================================================== */
+
+// ── DEBUG FLAG ────────────────────────────────────────────────────────
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+
+// ── LOGICAL GAME DIMENSIONS (9:16) ────────────────────────────────────
+const GW = 360;
+const GH = 640;
+
+// ── CONSTANTS ─────────────────────────────────────────────────────────
+// Player (Decreased size: compact, agile Mushak)
+const PLAYER_W     = 26;
+const PLAYER_H     = 40;
+
+// Physics
+const GRAVITY      = 1200;  // px/s²
+const JUMP_FORCE   = -520;  // px/s  (negative = upward)
+
+// Platforms — Stuck to walls, exactly 3 bricks wide
+const BRICK_W      = 46;
+const PLAT_W       = BRICK_W * 3;  // 138px wide
+const PLAT_H       = 28;
+const VERT_GAP_MIN = 72;    // min vertical gap between successive platforms
+const VERT_GAP_MAX = 92;    // max vertical gap
+const GEN_BUFFER   = 550;   // generate platforms this far above camera top
+
+// Platform break system (1.2s break timer as requested!)
+const BREAK_MAX    = 1.2;   // initial break duration: exactly 1.2s!
+const BREAK_MIN    = 0.65;  // minimum break duration
+const BREAK_RANGE  = 160;   // score range over which duration decreases
+const SHAKE_AT     = 0.45;  // start shaking when this many seconds remain
+
+// Lava (Faster speed as requested!)
+const LAVA_INIT    = 65;    // initial rise speed px/s (faster start!)
+const LAVA_ACCEL   = 0.030; // px/s per second acceleration
+const LAVA_MAX     = 230;   // maximum rise speed px/s
+
+// Camera
+const CAM_SMOOTH   = 0.085;
+const CAM_RATIO    = 0.45;  // keep player at 45% from top
+
+// Starting floor
+const FLOOR_RATIO  = 0.15;  // 15% of game height
+const FLOOR_H      = Math.floor(GH * FLOOR_RATIO);  // 96px
+const FLOOR_Y      = GH - FLOOR_H;                  // 544px (world Y of floor top)
+const PX_START     = GW / 2 - PLAYER_W / 2;         // 167px (player start X)
+const PY_START     = FLOOR_Y - PLAYER_H;            // 504px (player start Y)
+const LAVA_Y0      = GH + 40;                       // 680px (lava starts below screen)
+
+// ── CANVAS & CONTEXT ─────────────────────────────────────────────────
+const canvas = document.getElementById('gameCanvas');
+const ctx    = canvas.getContext('2d');
+canvas.width  = GW;
+canvas.height = GH;
+
+// Camera offset (world Y maps to screen Y: screenY = worldY - cameraY)
+let cameraY = 0;
+const wy = worldY => worldY - cameraY;
+
+// ── ASSET LOADER ─────────────────────────────────────────────────────
+const IMG = {};
+const ASSET_MAP = {
+    standing : 'assets/standing_mushak.png',
+    jumping  : 'assets/jumping_mushak.png',
+    running1 : 'assets/mushak_running_1.png',
+    running2 : 'assets/mushak_running_2.png',
+    brick    : 'assets/brick1.png',
+    platform : 'assets/platform.png',
+};
+
+function loadAssets() {
+    return Promise.all(
+        Object.entries(ASSET_MAP).map(([k, src]) =>
+            new Promise(res => {
+                const img = new Image();
+                img.onload  = () => { IMG[k] = img; res(); };
+                img.onerror = () => { console.warn('[LavaClimb] Failed to load:', src); IMG[k] = null; res(); };
+                img.src = src;
+            })
+        )
+    );
+}
+
+// ── AUDIO (Web Audio API, procedural) ────────────────────────────────
+const SFX = (() => {
+    let actx = null;
+    function getCtx() {
+        if (!actx) {
+            const Cls = window.AudioContext || window.webkitAudioContext;
+            if (Cls) actx = new Cls();
+        }
+        if (actx && actx.state === 'suspended') actx.resume();
+        return actx;
+    }
+    ['pointerdown','keydown','touchstart'].forEach(e =>
+        window.addEventListener(e, () => getCtx(), { once: true }));
+
+    function tone(f0, f1, type, dur, vol, delay = 0) {
+        const c = getCtx(); if (!c) return;
+        const t   = c.currentTime + delay;
+        const osc = c.createOscillator();
+        const gn  = c.createGain();
+        osc.type  = type;
+        osc.frequency.setValueAtTime(f0, t);
+        if (f1) osc.frequency.exponentialRampToValueAtTime(f1, t + dur);
+        gn.gain.setValueAtTime(vol, t);
+        gn.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        osc.connect(gn); gn.connect(c.destination);
+        osc.start(t); osc.stop(t + dur);
+    }
+
+    return {
+        jump()   { tone(260, 640, 'sine',     0.14, 0.22); },
+        land()   { tone(380, 160, 'triangle', 0.10, 0.18); },
+        bounce() { tone(260, 640, 'sine',     0.14, 0.22, 0.05); },
+        crack()  { tone(220, 60,  'sawtooth', 0.12, 0.26);
+                   tone(140, 40,  'sawtooth', 0.10, 0.20, 0.06); },
+        over()   { [440,370,310,250].forEach((f,i) =>
+                       tone(f, f*0.72, 'sawtooth', 0.20, 0.20, i*0.18)); },
+        world()  { tone(880, 1500, 'sine',     0.10, 0.20);
+                   tone(1200, 700, 'triangle', 0.12, 0.16, 0.10); },
+    };
+})();
+
+// ── WORLD CONFIG ─────────────────────────────────────────────────────
+const WORLDS = {
+    CAVE:   { minScore: 0,   label: '🕳 CAVE',   bg1: '#04001a', bg2: '#0e0535' },
+    SKY:    { minScore: 170, label: '☁️ SKY',    bg1: '#1560d4', bg2: '#74bfef' },
+    HEAVEN: { minScore: 340, label: '✨ HEAVEN', bg1: '#fffce0', bg2: '#fff8c8' },
+    SPACE:  { minScore: 510, label: '🚀 SPACE',  bg1: '#000008', bg2: '#00041c' },
+};
+
+function worldFromScore(s) {
+    if (s >= 510) return 'SPACE';
+    if (s >= 340) return 'HEAVEN';
+    if (s >= 170) return 'SKY';
+    return 'CAVE';
+}
+
+// Pre-generate star field for SPACE world
+const STARS = Array.from({ length: 110 }, () => ({
+    wx : Math.random() * GW,
+    wy0: Math.random() * 5000 - 4500,
+    sz : Math.random() * 1.6 + 0.4,
+    br : Math.random() * 0.5 + 0.45,
+}));
+
+// Pre-generate cave stalactites
+const STALACTITES = Array.from({ length: 16 }, (_, i) => ({
+    side: i % 2,
+    wy0 : i * 140 - 400,
+    len : 20 + (i * 41 % 36),
+    w   : 8  + (i * 23 % 10),
+}));
+
+// ── GAME STATE ────────────────────────────────────────────────────────
+const ST = { READY: 'READY', PLAYING: 'PLAYING', OVER: 'OVER' };
+let gameState = ST.READY;
+let score     = 0;
+let bestScore = parseInt(localStorage.getItem('mushik_lava_best') || '0', 10);
+let world     = 'CAVE';
+
+// ── PLAYER OBJECT ─────────────────────────────────────────────────────
+const P = {
+    x: PX_START, y: PY_START,
+    prevY: PY_START,
+    vY: 0,
+    facingRight: true,
+    sprite: 'standing',
+    bob: 0,
+
+    // Direct jump leap state
+    leaping: false,
+    leapStart: { x: 0, y: 0 },
+    leapTarget: { x: 0, y: 0 },
+    leapProgress: 0,
+    leapDuration: 0.28,
+    targetPlatform: null,
+};
+
+let inputBuffer = null;
+let inputBufferTimer = 0;
+
+// ── LAVA OBJECT ───────────────────────────────────────────────────────
+const lava = {
+    y     : LAVA_Y0,
+    speed : LAVA_INIT,
+    wave  : 0,
+    particles: [],
+};
+
+// ── PLATFORMS (Randomized stuck-to-wall platforms, 3 bricks wide) ─────
+let platforms = [];
+let consecutiveSameSide = 0;
+let lastSide = 'left';
+
+function breakDuration() {
+    const t = Math.min(score / BREAK_RANGE, 1);
+    return Math.max(BREAK_MIN, BREAK_MAX - (BREAK_MAX - BREAK_MIN) * t);
+}
+
+// Create a platform STUCK TO WALL: side can be 'left' (x=0) or 'right' (x=GW - PLAT_W)
+function mkPlat(side, y) {
+    const x = (side === 'left') ? 0 : (GW - PLAT_W);
+    // Landing zone covers ANY brick on the platform (full width)
+    const landW = PLAT_W;
+    const cx = x + PLAT_W / 2;
+
+    platforms.push({
+        side,
+        x, y,
+        cx,
+        landW,
+        bt   : 0,                // break timer (seconds remaining)
+        bd   : 0,                // initial break duration
+        shk  : 0,                // shake offset
+        hit  : false,            // has been landed on
+        done : false,            // fully broken
+    });
+}
+
+function highestPlatY() {
+    if (!platforms.length) return FLOOR_Y;
+    let min = FLOOR_Y;
+    for (const p of platforms) if (p.y < min) min = p.y;
+    return min;
+}
+
+function initPlatforms() {
+    platforms = [];
+    consecutiveSameSide = 1;
+    lastSide = Math.random() < 0.5 ? 'left' : 'right';
+
+    // First platform: random side, 78px above starting floor
+    mkPlat(lastSide, FLOOR_Y - 78);
+    // Fill generation buffer above camera
+    while (highestPlatY() > cameraY - GEN_BUFFER) genNextPlat();
+}
+
+function genNextPlat() {
+    const ref = platforms.reduce(
+        (best, p) => p.y < best.y ? p : best,
+        { y: FLOOR_Y, side: 'left' }
+    );
+
+    // Randomize platform sides, with max 2 in a row on same side
+    let nextSide;
+    if (consecutiveSameSide >= 2) {
+        nextSide = (lastSide === 'left') ? 'right' : 'left';
+        consecutiveSameSide = 1;
+    } else {
+        nextSide = Math.random() < 0.5 ? 'left' : 'right';
+        if (nextSide === lastSide) {
+            consecutiveSameSide++;
+        } else {
+            consecutiveSameSide = 1;
+        }
+    }
+    lastSide = nextSide;
+
+    const vGap = VERT_GAP_MIN + Math.random() * (VERT_GAP_MAX - VERT_GAP_MIN);
+    const ny = ref.y - vGap;
+
+    mkPlat(nextSide, ny);
+}
+
+// ── DIRECT JUMP MECHANIC ──────────────────────────────────────────────
+// When clicked/pressed, player directly jumps onto the brick in that direction
+function requestJump(direction) {
+    if (gameState === ST.OVER) return;
+    if (gameState === ST.READY) startGame();
+
+    if (P.leaping) {
+        // Buffer next input so rapid taps execute seamlessly on landing
+        inputBuffer = direction;
+        inputBufferTimer = 0.35;
+        return;
+    }
+    executeDirectJump(direction);
+}
+
+function executeDirectJump(direction) {
+    const playerFeet = P.y + PLAYER_H;
+
+    // Find platform in that direction that is ONLY ONE platform height away (not two!)
+    // Standard gap between successive platforms is ~72-92px.
+    // We strictly limit candidates to 1 platform step (vStep <= 122px) so it never leaps two platform heights!
+    const candidates = platforms.filter(pl => {
+        if (pl.done || pl.side !== direction) return false;
+        const vStep = playerFeet - pl.y;
+        return vStep > 30 && vStep <= 122;
+    });
+    candidates.sort((a, b) => b.y - a.y); // nearest above
+
+    if (candidates.length > 0) {
+        const targetPl = candidates[0];
+        // Target is directly on the bricks of that platform
+        const targetX = targetPl.x + (PLAT_W / 2) - (PLAYER_W / 2);
+        const targetY = targetPl.y - PLAYER_H;
+
+        P.leaping = true;
+        P.leapStart = { x: P.x, y: P.y };
+        P.leapTarget = { x: targetX, y: targetY };
+        P.leapProgress = 0;
+        P.leapDuration = 0.25;
+        P.targetPlatform = targetPl;
+        P.facingRight = (direction === 'right');
+        P.sprite = 'jumping';
+        SFX.jump();
+    }
+    // If no valid platform found in that direction → do nothing (Mushik stays put)
+}
+
+// Keyboard input: discrete, no repeat
+window.addEventListener('keydown', e => {
+    if (e.repeat) return;
+    if (e.code === 'ArrowLeft'  || e.code === 'KeyA') { e.preventDefault(); requestJump('left');  }
+    if (e.code === 'ArrowRight' || e.code === 'KeyD') { e.preventDefault(); requestJump('right'); }
+}, { passive: false });
+
+window.addEventListener('keyup', e => {
+    if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') e.preventDefault();
+}, { passive: false });
+
+// Touch / Pointer handling: Left half = jump left, Right half = jump right
+let lastInputTime = 0;
+function handlePointerOrTouch(clientX) {
+    const now = Date.now();
+    if (now - lastInputTime < 80) return;
+    lastInputTime = now;
+    const rect = canvas.getBoundingClientRect();
+    const gx   = (clientX - rect.left) / rect.width * GW;
+    if (gx < GW / 2) requestJump('left'); else requestJump('right');
+}
+
+canvas.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    handlePointerOrTouch(e.clientX);
+}, { passive: false });
+
+canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (e.touches && e.touches.length > 0) {
+        handlePointerOrTouch(e.touches[0].clientX);
+    }
+}, { passive: false });
+
+// Prevent accidental gestures/scrolling
+canvas.addEventListener('touchmove',  e => e.preventDefault(), { passive: false });
+document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+// ── GAME STATE TRANSITIONS ────────────────────────────────────────────
+function startGame() {
+    gameState = ST.PLAYING;
+    hideUI();
+    const hints = document.getElementById('touch-hints');
+    if (hints) hints.style.display = 'none';
+}
+
+function resetGame() {
+    // Player
+    P.x = PX_START; P.y = PY_START; P.prevY = PY_START;
+    P.vY = 0; P.facingRight = true;
+    P.sprite = 'standing'; P.bob = 0;
+    P.leaping = false; P.targetPlatform = null;
+    inputBuffer = null;
+
+    // Lava
+    lava.y = LAVA_Y0; lava.speed = LAVA_INIT;
+    lava.wave = 0; lava.particles = [];
+
+    // Camera
+    cameraY = 0;
+
+    // Score / World
+    score = 0; world = 'CAVE';
+
+    // Platforms
+    initPlatforms();
+
+    // State
+    gameState = ST.READY;
+    const glow = document.getElementById('lava-glow');
+    if (glow) glow.style.opacity = '0';
+    const hints = document.getElementById('touch-hints');
+    if (hints) hints.style.display = 'flex';
+    showReadyUI();
+}
+
+// ── UPDATE LOOP ───────────────────────────────────────────────────────
+function update(dt) {
+    if (gameState === ST.PLAYING) {
+        updatePlayer(dt);
+        updateLava(dt);
+        updateCamera(dt);
+        updatePlatforms(dt);
+        checkLavaHit();
+        maintainPlatforms();
+        cleanPlatforms();
+        checkWorldTransition();
+        updateLavaWarning();
+    } else if (gameState === ST.READY) {
+        P.bob = Math.sin(performance.now() / 650) * 3;
+    }
+}
+
+// ── PLAYER UPDATE ─────────────────────────────────────────────────────
+function updatePlayer(dt) {
+    if (inputBufferTimer > 0) inputBufferTimer -= dt;
+
+    if (P.leaping) {
+        P.leapProgress += dt / P.leapDuration;
+        if (P.leapProgress >= 1) {
+            // Land directly onto the target brick
+            P.leaping = false;
+            P.x = P.leapTarget.x;
+            P.y = P.leapTarget.y;
+            P.vY = 0;
+            P.prevY = P.y;
+
+            const pl = P.targetPlatform;
+            if (pl && !pl.hit) {
+                pl.hit = true;
+                pl.bd  = breakDuration();
+                pl.bt  = pl.bd;
+
+                score++;
+                if (score > bestScore) {
+                    bestScore = score;
+                    localStorage.setItem('mushik_lava_best', bestScore);
+                }
+                SFX.land();
+                SFX.bounce();
+            }
+
+            // Check buffered input immediately upon landing
+            if (inputBuffer && inputBufferTimer > 0) {
+                const dir = inputBuffer;
+                inputBuffer = null;
+                executeDirectJump(dir);
+            }
+        } else {
+            const t = P.leapProgress;
+            // Smooth horizontal motion
+            P.x = P.leapStart.x + (P.leapTarget.x - P.leapStart.x) * t;
+
+            // Clean, low parabolic arc (curves up only 20px, strictly 1 platform height)
+            const arcPeak = 20;
+            const linearY = P.leapStart.y + (P.leapTarget.y - P.leapStart.y) * t;
+            P.y = linearY - Math.sin(t * Math.PI) * arcPeak;
+            P.vY = (P.leapTarget.y - P.leapStart.y) / P.leapDuration;
+            P.sprite = 'jumping';
+        }
+    } else {
+        // Free fall physics (when not leaping, e.g. platform broke beneath)
+        P.prevY = P.y;
+        P.vY += GRAVITY * dt;
+        P.y  += P.vY * dt;
+
+        if (P.vY === 0) {
+            P.sprite = 'standing';
+        } else {
+            P.sprite = 'jumping';
+        }
+
+        // Floor collision — while lava has not submerged floor top
+        if (P.vY > 0 && lava.y > FLOOR_Y + 4) {
+            const prevBot = P.prevY + PLAYER_H;
+            const currBot = P.y     + PLAYER_H;
+            if (prevBot <= FLOOR_Y && currBot >= FLOOR_Y) {
+                P.y  = FLOOR_Y - PLAYER_H;
+                P.vY = 0;
+                SFX.land();
+            }
+        }
+
+        // Platform collision while falling — can land on ANY brick!
+        if (P.vY > 0) checkPlatCollisions();
+    }
+}
+
+function checkPlatCollisions() {
+    const prevBot = P.prevY + PLAYER_H;
+    const currBot = P.y     + PLAYER_H;
+    const pcx     = P.x + PLAYER_W / 2;
+
+    for (const pl of platforms) {
+        if (pl.done) continue;
+
+        // Vertical: crossed top of platform while falling
+        if (prevBot <= pl.y && currBot >= pl.y) {
+            // Can land on ANY brick of the platform (full width)
+            if (pcx >= pl.x && pcx <= pl.x + PLAT_W) {
+                P.y  = pl.y - PLAYER_H;
+                P.vY = 0;
+
+                if (!pl.hit) {
+                    pl.hit = true;
+                    pl.bd  = breakDuration();
+                    pl.bt  = pl.bd;
+
+                    score++;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        localStorage.setItem('mushik_lava_best', bestScore);
+                    }
+                    SFX.land();
+                    SFX.bounce();
+                }
+                return;
+            }
+        }
+    }
+}
+
+// ── PLATFORM TIMERS & BREAKING ────────────────────────────────────────
+function updatePlatforms(dt) {
+    for (const pl of platforms) {
+        if (!pl.hit || pl.done) continue;
+        pl.bt -= dt;
+
+        // Shake effect when close to breaking (starts at 0.45s)
+        if (pl.bt <= SHAKE_AT) {
+            const intensity = (1 - pl.bt / SHAKE_AT) * 4.0;
+            pl.shk = (Math.random() * 2 - 1) * intensity;
+        }
+
+        if (pl.bt <= 0) {
+            pl.done = true;
+            pl.shk  = 0;
+            SFX.crack();
+        }
+    }
+}
+
+function maintainPlatforms() {
+    while (highestPlatY() > cameraY - GEN_BUFFER) genNextPlat();
+}
+
+function cleanPlatforms() {
+    const cutoff = cameraY + GH + 260;
+    platforms = platforms.filter(pl => !pl.done && pl.y < cutoff);
+}
+
+// ── LAVA UPDATE ───────────────────────────────────────────────────────
+function updateLava(dt) {
+    lava.wave  += dt * 2.8;
+    lava.y     -= lava.speed * dt;                           // rises upward (faster!)
+    lava.speed  = Math.min(LAVA_MAX, lava.speed + LAVA_ACCEL * dt);
+
+    // Spawn lava particles / sparks
+    if (Math.random() < dt * 8) {
+        lava.particles.push({
+            x: Math.random() * GW,
+            y: lava.y,
+            vy: -(Math.random() * 65 + 35),
+            sz: Math.random() * 3.8 + 2,
+            life: 0,
+            ml: Math.random() * 0.5 + 0.25,
+        });
+    }
+    // Update particles
+    for (let i = lava.particles.length - 1; i >= 0; i--) {
+        const par = lava.particles[i];
+        par.life += dt;
+        par.y    += par.vy * dt;
+        par.vy   += 90 * dt;
+        if (par.life >= par.ml) lava.particles.splice(i, 1);
+    }
+    if (lava.particles.length > 28) lava.particles.length = 28;
+}
+
+// ── CAMERA UPDATE ─────────────────────────────────────────────────────
+function updateCamera(dt) {
+    const target = P.y - GH * CAM_RATIO;
+    cameraY += (target - cameraY) * CAM_SMOOTH;
+    cameraY  = Math.min(cameraY, 0);   // never scroll below initial starting position
+}
+
+// ── LAVA COLLISION & GAME OVER ────────────────────────────────────────
+function checkLavaHit() {
+    if (P.y + PLAYER_H >= lava.y - 2) triggerGameOver();
+}
+
+function triggerGameOver() {
+    if (gameState === ST.OVER) return;
+    gameState = ST.OVER;
+    const glow = document.getElementById('lava-glow');
+    if (glow) glow.style.opacity = '0';
+    SFX.over();
+    setTimeout(showGameOverUI, 500);
+}
+
+// ── WORLD TRANSITION ──────────────────────────────────────────────────
+function checkWorldTransition() {
+    const nw = worldFromScore(score);
+    if (nw !== world) {
+        world = nw;
+        SFX.world();
+        doWorldFlash();
+    }
+}
+
+function doWorldFlash() {
+    const el = document.getElementById('world-flash');
+    if (!el) return;
+    el.style.transition = 'none';
+    el.style.opacity    = '0.7';
+    requestAnimationFrame(() => {
+        el.style.transition = 'opacity 0.26s ease-out';
+        el.style.opacity    = '0';
+    });
+}
+
+// ── LAVA WARNING GLOW ─────────────────────────────────────────────────
+function updateLavaWarning() {
+    const dist = lava.y - (P.y + PLAYER_H);
+    const el   = document.getElementById('lava-glow');
+    if (el) el.style.opacity = dist < 140 ? String(Math.max(0, (1 - dist / 140)).toFixed(2)) : '0';
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER FUNCTIONS
+// ════════════════════════════════════════════════════════════════
+
+function render() {
+    ctx.clearRect(0, 0, GW, GH);
+    drawBackground();
+    drawFloor();
+    drawPlatforms();
+    drawLava();
+    drawPlayer();
+    drawHUD();
+    if (DEBUG) drawDebug();
+}
+
+// ── BACKGROUND ────────────────────────────────────────────────────────
+function drawBackground() {
+    const w    = WORLDS[world];
+    const grad = ctx.createLinearGradient(0, 0, 0, GH);
+    grad.addColorStop(0, w.bg1);
+    grad.addColorStop(1, w.bg2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, GW, GH);
+
+    switch (world) {
+        case 'CAVE':   drawCaveBg();   break;
+        case 'SKY':    drawSkyBg();    break;
+        case 'HEAVEN': drawHeavenBg(); break;
+        case 'SPACE':  drawSpaceBg();  break;
+    }
+}
+
+function drawCaveBg() {
+    // Rocky cave side walls
+    const lgrad = ctx.createLinearGradient(0, 0, 48, 0);
+    lgrad.addColorStop(0, 'rgba(12,3,32,0.97)');
+    lgrad.addColorStop(1, 'rgba(12,3,32,0)');
+    ctx.fillStyle = lgrad; ctx.fillRect(0, 0, 48, GH);
+
+    const rgrad = ctx.createLinearGradient(GW, 0, GW - 48, 0);
+    rgrad.addColorStop(0, 'rgba(12,3,32,0.97)');
+    rgrad.addColorStop(1, 'rgba(12,3,32,0)');
+    ctx.fillStyle = rgrad; ctx.fillRect(GW - 48, 0, 48, GH);
+
+    // Stalactites with subtle parallax
+    ctx.fillStyle = 'rgba(18,6,42,0.85)';
+    const wrap = GH + 120;
+    for (const s of STALACTITES) {
+        const rawY = ((s.wy0 - cameraY * 0.85) % wrap + wrap) % wrap;
+        const sx   = s.side === 0 ? 0 : GW - s.w;
+        ctx.beginPath();
+        if (s.side === 0) {
+            ctx.moveTo(sx, rawY);
+            ctx.lineTo(sx + s.w, rawY);
+            ctx.lineTo(sx + s.w * 0.38, rawY + s.len);
+        } else {
+            ctx.moveTo(sx, rawY);
+            ctx.lineTo(sx + s.w, rawY);
+            ctx.lineTo(sx + s.w * 0.62, rawY + s.len);
+        }
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // Soft purple center glow
+    const cg = ctx.createRadialGradient(GW / 2, GH * 0.5, 10, GW / 2, GH * 0.5, GW * 0.65);
+    cg.addColorStop(0, 'rgba(90,30,160,0.10)');
+    cg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = cg;
+    ctx.fillRect(0, 0, GW, GH);
+}
+
+function drawSkyBg() {
+    // Parallax clouds
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    const cloudData = [
+        [55,  90],  [215, 135], [300, 65],
+        [85,  230], [255, 290], [140, 370],
+    ];
+    const wrap = GH + 100;
+    for (const [cx, cy0] of cloudData) {
+        const cy = ((cy0 - cameraY * 0.22) % wrap + wrap) % wrap;
+        drawCloud(cx, cy);
+    }
+
+    // Lower haze
+    const hz = ctx.createLinearGradient(0, GH - 80, 0, GH);
+    hz.addColorStop(0, 'rgba(255,255,255,0)');
+    hz.addColorStop(1, 'rgba(255,255,255,0.18)');
+    ctx.fillStyle = hz;
+    ctx.fillRect(0, GH - 80, GW, 80);
+}
+
+function drawCloud(cx, cy) {
+    ctx.beginPath();
+    ctx.arc(cx,      cy,      16, 0, Math.PI * 2);
+    ctx.arc(cx + 20, cy - 9,  20, 0, Math.PI * 2);
+    ctx.arc(cx + 42, cy,      14, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawHeavenBg() {
+    const t = performance.now() / 1000;
+
+    // Heavenly golden light rays
+    const rg = ctx.createRadialGradient(GW / 2, 0, 5, GW / 2, 80, 260);
+    rg.addColorStop(0, 'rgba(255,230,50,0.38)');
+    rg.addColorStop(1, 'rgba(255,220,50,0)');
+    ctx.fillStyle = rg;
+    ctx.fillRect(0, 0, GW, GH);
+
+    // Floating divine sparkles
+    for (let i = 0; i < 12; i++) {
+        const px = (Math.sin(i * 1.9 + t * 0.35) * 0.5 + 0.5) * GW;
+        const wrap = GH + 30;
+        const py = ((i * 55 - cameraY * 0.18 + t * 28) % wrap + wrap) % wrap;
+        const al = 0.28 + 0.34 * Math.sin(t * 2.2 + i);
+        ctx.fillStyle = 'rgba(255,210,30,' + al.toFixed(2) + ')';
+        ctx.beginPath();
+        ctx.arc(px, py, 1.6 + Math.sin(t + i) * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Top white celestial mist
+    const wg = ctx.createLinearGradient(0, 0, 0, 80);
+    wg.addColorStop(0, 'rgba(255,255,255,0.35)');
+    wg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = wg;
+    ctx.fillRect(0, 0, GW, 80);
+}
+
+function drawSpaceBg() {
+    const t    = performance.now() / 1000;
+    const wrap = GH + 60;
+
+    // Stars with twinkling and parallax
+    for (const s of STARS) {
+        const sy = ((s.wy0 - cameraY * 0.13) % wrap + wrap) % wrap;
+        const br = s.br * (0.6 + 0.4 * Math.sin(t * 1.3 + s.wx));
+        ctx.fillStyle = 'rgba(200,212,255,' + br.toFixed(2) + ')';
+        ctx.beginPath();
+        ctx.arc(s.wx, sy, s.sz, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Nebula glows
+    const ng1 = ctx.createRadialGradient(70, 180, 8, 70, 180, 140);
+    ng1.addColorStop(0, 'rgba(55,20,140,0.20)');
+    ng1.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = ng1; ctx.fillRect(0, 0, GW, GH);
+
+    const ng2 = ctx.createRadialGradient(295, 380, 8, 295, 380, 120);
+    ng2.addColorStop(0, 'rgba(20,55,160,0.16)');
+    ng2.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = ng2; ctx.fillRect(0, 0, GW, GH);
+}
+
+// ── STARTING FLOOR ────────────────────────────────────────────────────
+function drawFloor() {
+    const sy = wy(FLOOR_Y);
+    if (sy > GH + 4 || sy + FLOOR_H < -4) return;
+
+    if (IMG.platform) {
+        const iw = IMG.platform.naturalWidth  || 256;
+        const ih = IMG.platform.naturalHeight || 80;
+        const scale = FLOOR_H / ih;
+        const tw    = iw * scale;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, sy, GW, FLOOR_H + 2);
+        ctx.clip();
+        for (let tx = 0; tx < GW; tx += tw) {
+            ctx.drawImage(IMG.platform, tx, sy, tw, FLOOR_H);
+        }
+        ctx.restore();
+    } else {
+        // Fallback floor
+        ctx.fillStyle = '#3a1c6a';
+        ctx.fillRect(0, sy, GW, FLOOR_H);
+        ctx.fillStyle = '#5c2e9a';
+        ctx.fillRect(0, sy, GW, 7);
+    }
+}
+
+// ── FLOATING PLATFORMS (RANDOMIZED STUCK TO WALLS, 3 BRICKS) ─────────
+function drawPlatforms() {
+    for (const pl of platforms) {
+        if (pl.done) continue;
+
+        const sx = pl.x + pl.shk;
+        const sy = wy(pl.y);
+        if (sy > GH + 4 || sy + PLAT_H < -4) continue;
+
+        // Flicker / shake when platform is about to break (under 0.45s)
+        if (pl.hit && pl.bt < SHAKE_AT) {
+            ctx.globalAlpha = 0.42 + 0.58 * Math.abs(Math.sin(pl.bt * 32));
+        }
+
+        // Draw wall stone anchor joint where platform meets the wall
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        if (pl.side === 'left') {
+            ctx.fillRect(0, sy - 2, 8, PLAT_H + 8);
+        } else {
+            ctx.fillRect(GW - 8, sy - 2, 8, PLAT_H + 8);
+        }
+
+        // Draw exactly 3 bricks stuck to wall (can land on ANY brick)
+        if (IMG.brick) {
+            for (let i = 0; i < 3; i++) {
+                ctx.drawImage(IMG.brick, sx + i * BRICK_W, sy, BRICK_W, PLAT_H);
+            }
+        } else {
+            // Fallback brick platform
+            ctx.fillStyle = '#7B4800';
+            ctx.fillRect(sx, sy, PLAT_W, PLAT_H);
+            ctx.fillStyle = 'rgba(255,190,50,0.25)';
+            ctx.fillRect(sx, sy, PLAT_W, 5);
+            ctx.strokeStyle = '#3D2300';
+            ctx.lineWidth = 1;
+            for (let i = 1; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(sx + i * BRICK_W, sy);
+                ctx.lineTo(sx + i * BRICK_W, sy + PLAT_H);
+                ctx.stroke();
+            }
+        }
+
+        ctx.globalAlpha = 1;
+
+        // NOTE: Green line has been removed as requested!
+        // Platform shake and subtle opacity flicker provides natural tactile feedback.
+
+        // Debug outline of platform landing box
+        if (DEBUG) {
+            ctx.strokeStyle = '#00FF88';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 2]);
+            ctx.strokeRect(sx, sy, PLAT_W, PLAT_H);
+            ctx.setLineDash([]);
+        }
+    }
+}
+
+// ── LAVA ──────────────────────────────────────────────────────────────
+function drawLava() {
+    const sy = wy(lava.y);
+    if (sy > GH + 50) return;
+
+    const bodyH = Math.max(0, GH - sy + 50);
+
+    // Main lava body
+    const grad = ctx.createLinearGradient(0, sy, 0, sy + 55);
+    grad.addColorStop(0,    '#FF6800');
+    grad.addColorStop(0.25, '#DD2000');
+    grad.addColorStop(1,    '#6B0000');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, sy + 10, GW, bodyH);
+
+    // Animated surface wave
+    ctx.fillStyle = '#FF7200';
+    ctx.beginPath();
+    ctx.moveTo(0, sy + 10);
+    for (let x = 0; x <= GW; x += 3) {
+        const wave = Math.sin(x * 0.044 + lava.wave) * 6
+                   + Math.sin(x * 0.09  + lava.wave * 1.5) * 3;
+        ctx.lineTo(x, sy + wave);
+    }
+    ctx.lineTo(GW, sy + 10);
+    ctx.closePath();
+    ctx.fill();
+
+    // Soft glow above lava surface
+    const glow = ctx.createLinearGradient(0, sy - 40, 0, sy);
+    glow.addColorStop(0, 'rgba(255,100,0,0)');
+    glow.addColorStop(1, 'rgba(255,100,0,0.42)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, sy - 40, GW, 40);
+
+    // Bubbles & spark particles
+    for (const par of lava.particles) {
+        const psy = wy(par.y);
+        if (psy > sy + 4 || psy < sy - 50) continue;
+        const al = (1 - par.life / par.ml) * 0.82;
+        ctx.globalAlpha = al;
+        ctx.fillStyle = Math.random() > 0.55 ? '#FFA000' : '#FF5500';
+        ctx.beginPath();
+        ctx.arc(par.x, psy, par.sz, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+}
+
+// ── PLAYER SPRITE (Smaller scale for cute agile Mushak) ───────────────
+function drawPlayer() {
+    const bob = gameState === ST.READY ? P.bob : 0;
+    const sx  = P.x;
+    const sy  = wy(P.y) + bob;
+    if (sy > GH + 12 || sy + PLAYER_H < -12) return;
+
+    ctx.save();
+    if (!P.facingRight) {
+        ctx.translate(sx + PLAYER_W / 2, 0);
+        ctx.scale(-1, 1);
+        ctx.translate(-(sx + PLAYER_W / 2), 0);
+    }
+
+    const img = IMG[P.sprite] || IMG.standing;
+    if (img) {
+        ctx.drawImage(img, sx, sy, PLAYER_W, PLAYER_H);
+    } else {
+        // Fallback rat sprite
+        ctx.fillStyle = '#E91E63';
+        ctx.fillRect(sx, sy, PLAYER_W, PLAYER_H);
+        ctx.fillStyle = '#FCE4EC';
+        ctx.beginPath();
+        ctx.arc(sx + PLAYER_W / 2, sy + 10, 7, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+
+    if (DEBUG) {
+        ctx.strokeStyle = 'rgba(0,200,255,0.85)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(sx, wy(P.y), PLAYER_W, PLAYER_H);
+    }
+}
+
+// ── HUD ───────────────────────────────────────────────────────────────
+function drawHUD() {
+    // Top bar backdrop
+    ctx.fillStyle = 'rgba(0,0,0,0.52)';
+    ctx.fillRect(0, 0, GW, 48);
+    ctx.fillStyle = 'rgba(255,179,0,0.22)';
+    ctx.fillRect(0, 48, GW, 1);
+
+    // SCORE
+    ctx.fillStyle = '#FFD54F';
+    ctx.font = 'bold 10px Outfit, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('SCORE', 13, 15);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 24px Outfit, sans-serif';
+    ctx.fillText(String(score), 13, 41);
+
+    // World label (top right)
+    ctx.fillStyle = '#CE93D8';
+    ctx.font = 'bold 10px Outfit, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(WORLDS[world].label, GW - 13, 15);
+
+    // Best score
+    ctx.fillStyle = '#546E7A';
+    ctx.font = '10px Outfit, sans-serif';
+    ctx.fillText('BEST  ' + bestScore, GW - 13, 41);
+
+    // Lava indicator (center top)
+    if (gameState === ST.PLAYING) {
+        const heat = (lava.speed - LAVA_INIT) / (LAVA_MAX - LAVA_INIT);
+        const bw   = 58;
+        const bx   = GW / 2 - bw / 2;
+
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(bx, 6, bw, 5);
+
+        const hg = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+        hg.addColorStop(0, '#FF9800');
+        hg.addColorStop(1, '#FF1744');
+        ctx.fillStyle = hg;
+        ctx.fillRect(bx, 6, bw * heat, 5);
+
+        ctx.fillStyle = 'rgba(255,152,0,0.65)';
+        ctx.font = '8px Outfit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🔥 LAVA', GW / 2, 26);
+    }
+
+    // READY hint (bottom center, pulsing)
+    if (gameState === ST.READY) {
+        const al = 0.5 + 0.5 * Math.sin(performance.now() / 460);
+        ctx.fillStyle = 'rgba(255,179,0,' + al.toFixed(2) + ')';
+        ctx.font = 'bold 12.5px Outfit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('TAP OR PRESS A / D TO JUMP', GW / 2, GH - 22);
+    }
+
+    ctx.textAlign = 'left';
+}
+
+// ── DEBUG OVERLAY ─────────────────────────────────────────────────────
+function drawDebug() {
+    ctx.fillStyle = 'rgba(0,0,0,0.76)';
+    ctx.fillRect(0, 49, 185, 130);
+    ctx.fillStyle = '#00FF88';
+    ctx.font = '9.5px monospace';
+    const lines = [
+        'X:' + P.x.toFixed(0) + '  Y:' + P.y.toFixed(0),
+        'vY:' + P.vY.toFixed(0) + ' leap:' + P.leaping,
+        'camY:' + cameraY.toFixed(0),
+        'lava: y=' + lava.y.toFixed(0) + ' spd=' + lava.speed.toFixed(1),
+        'score:' + score + '  world:' + world,
+        'plats:' + platforms.length,
+        'highestY:' + highestPlatY().toFixed(0),
+        'breakDur:' + breakDuration().toFixed(2) + 's',
+        'state:' + gameState,
+    ];
+    lines.forEach((l, i) => ctx.fillText(l, 4, 63 + i * 13));
+}
+
+// ════════════════════════════════════════════════════════════════
+//  UI OVERLAYS
+// ════════════════════════════════════════════════════════════════
+function showReadyUI() {
+    const overlay = document.getElementById('ui-overlay');
+    overlay.innerHTML = `
+        <div class="modal-card ready" onpointerdown="event.stopPropagation()">
+            <div class="modal-title" style="color:#FFD54F;">🌋 LAVA CLIMB</div>
+            <div class="modal-sub" style="color:#CE93D8;font-size:12px;margin-top:2px;">
+                Help Mushak escape the fast rising lava!
+            </div>
+            <div class="modal-sub" style="margin-top:10px;">
+                ← → Arrow keys or A / D on desktop<br>
+                Tap left / right side on mobile<br>
+                <span style="color:#FF7043;">Watch the walls: platforms appear randomly!</span>
+            </div>
+            <div class="hint-pulse">Tap or press ← → to jump</div>
+            <div class="btn-row">
+                <button class="lc-btn btn-ghost" onclick="window.location.href='index.html'">← Main Menu</button>
+            </div>
+        </div>`;
+}
+
+function hideUI() {
+    document.getElementById('ui-overlay').innerHTML = '';
+}
+
+function showGameOverUI() {
+    const isNew = score > 0 && score >= bestScore;
+    const overlay = document.getElementById('ui-overlay');
+    overlay.innerHTML = `
+        <div class="modal-card" onpointerdown="event.stopPropagation()">
+            <div class="modal-title">🔥 GAME OVER</div>
+            <div class="score-big">${score}</div>
+            <div class="best-line">${isNew ? '🏆 NEW BEST SCORE!' : '👑 Best: ' + bestScore}</div>
+            <div class="btn-row">
+                <button class="lc-btn btn-fire" onclick="doRestart()">🔄 RESTART</button>
+                <button class="lc-btn btn-ghost" onclick="window.location.href='index.html'">⌂ Menu</button>
+            </div>
+        </div>`;
+}
+
+window.doRestart = function () { resetGame(); };
+
+// ════════════════════════════════════════════════════════════════
+//  CANVAS RESIZE (maintain 9:16 aspect ratio)
+// ════════════════════════════════════════════════════════════════
+function resizeCanvas() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const aspect = GW / GH;           // 0.5625
+    let dw, dh;
+    if (vw / vh > aspect) { dh = vh; dw = dh * aspect; }
+    else                  { dw = vw; dh = dw / aspect; }
+    canvas.style.width    = dw + 'px';
+    canvas.style.height   = dh + 'px';
+    canvas.style.left     = ((vw - dw) / 2) + 'px';
+    canvas.style.top      = ((vh - dh) / 2) + 'px';
+    canvas.style.position = 'absolute';
+}
+
+window.addEventListener('resize',            resizeCanvas);
+window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+
+// ════════════════════════════════════════════════════════════════
+//  GAME LOOP
+// ════════════════════════════════════════════════════════════════
+let lastTs = null;
+
+function loop(ts) {
+    if (lastTs === null) lastTs = ts;
+    const dt = Math.min((ts - lastTs) / 1000, 0.033); // max 33ms clamp to avoid physics explosion
+    lastTs = ts;
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════
+loadAssets().then(() => {
+    resizeCanvas();
+    initPlatforms();
+    showReadyUI();
+    requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>

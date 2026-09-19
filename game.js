@@ -390,26 +390,23 @@ class MenuScene extends Phaser.Scene {
             strokeThickness: 4
         }).setOrigin(0.5);
 
-        // MAIN ACTION BUTTON 1: START GAME (Level 1)
-        this.createButton(width / 2, 385, 300, 58, '▶ START GAME', 0xFF5722, 0xFF7043, 0xFFD700, () => {
+        // MAIN ACTION BUTTON 1: START GAME → goes directly to Level Select
+        this.createButton(width / 2 - 170, 400, 300, 60, '▶ FESTIVAL LEVELS', 0xFF5722, 0xFF7043, 0xFFD700, () => {
             if (window.SoundEffects) window.SoundEffects.playJump();
             this.cameras.main.fade(300, 0, 0, 0);
             this.time.delayedCall(300, () => {
-                this.scene.start('LevelScene', { levelId: 'level1' });
-            });
-        });
-
-        // MAIN ACTION BUTTON 2: SELECT LEVEL (Levels Page)
-        this.createButton(width / 2, 462, 300, 58, '🗺️ SELECT LEVEL', 0x6A1B9A, 0x8E24AA, 0xFFD54F, () => {
-            if (window.SoundEffects) window.SoundEffects.playJump();
-            this.cameras.main.fade(250, 0, 0, 0);
-            this.time.delayedCall(250, () => {
                 this.scene.start('LevelSelectScene');
             });
         });
 
+        // MAIN ACTION BUTTON 2: LAVA CLIMB (ENDLESS VERTICAL MODE)
+        this.createButton(width / 2 + 170, 400, 300, 60, '🌋 LAVA CLIMB', 0xE65100, 0xFF9800, 0xFFD54F, () => {
+            if (window.SoundEffects) window.SoundEffects.playJump();
+            window.location.href = 'lava_climb.html';
+        });
+
         // ACTION BUTTON 3: HOW TO PLAY MODAL
-        const helpBtn = this.add.text(width / 2, 538, '📖 How to Play & Game Rules', {
+        const helpBtn = this.add.text(width / 2, 485, '📖 How to Play & Game Rules', {
             fontFamily: 'Segoe UI, sans-serif',
             fontSize: '18px',
             fontStyle: 'bold',
@@ -584,395 +581,379 @@ class LevelSelectScene extends Phaser.Scene {
         // Festive background with rich deep purple overlay
         const bg = this.add.image(width / 2, height / 2, 'background');
         bg.setDisplaySize(width, height);
-        bg.setTint(0x7e57c2);
+        bg.setTint(0x6a4aaa);
 
         const overlay = this.add.graphics();
-        overlay.fillGradientStyle(0x100520, 0x100520, 0x050010, 0x050010, 0.84);
+        overlay.fillGradientStyle(0x0a0318, 0x0a0318, 0x08020e, 0x08020e, 0.88);
         overlay.fillRect(0, 0, width, height);
 
-        // Header Navigation Bar
-        const backBtn = this.add.container(120, 45);
-        const backBg = this.add.graphics();
-        backBg.fillStyle(0x311b92, 0.9);
-        backBg.fillRoundedRect(-80, -20, 160, 40, 20);
-        backBg.lineStyle(2, 0xFFB300, 1);
-        backBg.strokeRoundedRect(-80, -20, 160, 40, 20);
+        // ── HEADER BAR ──────────────────────────────────────────────
+        // Thin decorative top line
+        const headerLine = this.add.graphics();
+        headerLine.lineStyle(2, 0xFFB300, 0.6);
+        headerLine.lineBetween(60, 70, width - 60, 70);
 
+        // Back button — top-left
+        const backBtn = this.add.container(90, 38);
+        const backBg = this.add.graphics();
+        backBg.fillStyle(0x1a0b30, 0.95);
+        backBg.fillRoundedRect(-78, -18, 156, 36, 18);
+        backBg.lineStyle(2, 0xFFB300, 0.9);
+        backBg.strokeRoundedRect(-78, -18, 156, 36, 18);
         const backTxt = this.add.text(0, 0, '← Main Menu', {
             fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '17px',
+            fontSize: '16px',
             fontStyle: 'bold',
-            color: '#FFFFFF'
+            color: '#FFD54F'
         }).setOrigin(0.5);
-
         backBtn.add([backBg, backTxt]);
-        backBtn.setSize(160, 40);
+        backBtn.setSize(156, 36);
         backBtn.setInteractive({ useHandCursor: true });
-
         backBtn.on('pointerover', () => {
-            backBtn.setScale(1.05);
+            backBtn.setScale(1.06);
             backBg.clear();
-            backBg.fillStyle(0x4527a0, 1);
-            backBg.fillRoundedRect(-80, -20, 160, 40, 20);
-            backBg.lineStyle(2, 0xFFD54F, 1);
-            backBg.strokeRoundedRect(-80, -20, 160, 40, 20);
+            backBg.fillStyle(0x3a1870, 1);
+            backBg.fillRoundedRect(-78, -18, 156, 36, 18);
+            backBg.lineStyle(2, 0xFFEB3B, 1);
+            backBg.strokeRoundedRect(-78, -18, 156, 36, 18);
         });
         backBtn.on('pointerout', () => {
             backBtn.setScale(1.0);
             backBg.clear();
-            backBg.fillStyle(0x311b92, 0.9);
-            backBg.fillRoundedRect(-80, -20, 160, 40, 20);
-            backBg.lineStyle(2, 0xFFB300, 1);
-            backBg.strokeRoundedRect(-80, -20, 160, 40, 20);
+            backBg.fillStyle(0x1a0b30, 0.95);
+            backBg.fillRoundedRect(-78, -18, 156, 36, 18);
+            backBg.lineStyle(2, 0xFFB300, 0.9);
+            backBg.strokeRoundedRect(-78, -18, 156, 36, 18);
         });
         backBtn.on('pointerdown', () => {
             if (window.SoundEffects) window.SoundEffects.playJump();
-            this.scene.start('MenuScene');
+            this.cameras.main.fade(250, 0, 0, 0);
+            this.time.delayedCall(250, () => this.scene.start('MenuScene'));
         });
 
-        // Page Header
-        this.add.text(width / 2, 45, '🚩 SELECT FESTIVAL LEVEL 🚩', {
+        // Page title — centred
+        this.add.text(width / 2, 22, '🚩  SELECT FESTIVAL LEVEL  🚩', {
             fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '36px',
+            fontSize: '30px',
             fontStyle: '900',
-            color: '#FFF275',
-            stroke: '#B71C1C',
+            color: '#FFF176',
+            stroke: '#7B1FA2',
             strokeThickness: 6,
-            shadow: { offsetX: 2, offsetY: 3, color: '#000000', blur: 6, fill: true }
-        }).setOrigin(0.5);
+            shadow: { offsetX: 2, offsetY: 3, color: '#000', blur: 8, fill: true }
+        }).setOrigin(0.5, 0);
 
-        this.add.text(width / 2, 85, 'Choose a neighborhood to guide Mushak directly to Lord Ganesha\'s Holy Pandal', {
+        this.add.text(width / 2, 57, 'Pick a neighbourhood · guide Mushak to Lord Ganesha\'s Holy Pandal', {
             fontFamily: 'Segoe UI, sans-serif',
-            fontSize: '16px',
-            color: '#FFD54F'
-        }).setOrigin(0.5);
+            fontSize: '14.5px',
+            color: '#CE93D8'
+        }).setOrigin(0.5, 0);
 
-        // Level Cards Data (Levels 1 to 6)
+        // ── LEVEL CARDS 2 × 2 GRID (Levels 3 & 4 removed) ────────────
+        // Layout: 2 columns, 2 rows. Card size 490 × 165
+        const cardW = 490;
+        const cardH = 165;
+        const colXs = [385, 895];          // centre x of each column
+        const rowYs = [165, 348];          // centre y of each row
+
         const levels = [
             {
-                id: 'level1',
-                num: 'LEVEL 1',
-                title: 'Galli / Lane',
-                subtitle: 'The Festival Alleyway',
-                diff: 'EASY',
-                stars: '⭐',
-                themeColor: 0xE65100,
-                accentColor: 0xFF9800,
-                x: 235,
-                y: 175,
-                w: 330,
-                h: 155
+                id: 'level1', num: 1, label: 'LEVEL 1',
+                title: 'Galli / Lane', subtitle: 'The Festival Alleyway',
+                diff: 'EASY', diffPct: 0.15,
+                stars: 1, starMax: 4,
+                themeColor: 0xE65100, accentColor: 0xFF9800,
+                diffColor: 0x66BB6A
             },
             {
-                id: 'level2',
-                num: 'LEVEL 2',
-                title: 'Market Street',
-                subtitle: 'The Bustling Bazaar',
-                diff: 'MEDIUM',
-                stars: '⭐⭐',
-                themeColor: 0xF57F17,
-                accentColor: 0xFFD600,
-                x: 640,
-                y: 175,
-                w: 330,
-                h: 155
+                id: 'level2', num: 2, label: 'LEVEL 2',
+                title: 'Market Street', subtitle: 'The Bustling Bazaar',
+                diff: 'MEDIUM', diffPct: 0.45,
+                stars: 2, starMax: 4,
+                themeColor: 0xF57F17, accentColor: 0xFFD600,
+                diffColor: 0xFFA726
             },
             {
-                id: 'level3',
-                num: 'LEVEL 3',
-                title: 'Rooftop Hop',
-                subtitle: 'Above the Festive City',
-                diff: 'HARD',
-                stars: '⭐⭐⭐',
-                themeColor: 0xC2185B,
-                accentColor: 0xFF4081,
-                x: 1045,
-                y: 175,
-                w: 330,
-                h: 155
+                id: 'level5', num: 3, label: 'LEVEL 3 (FINALE)',
+                title: 'The Pandal (Finale)', subtitle: "Lord Ganesha's Sanctuary",
+                diff: 'MASTER', diffPct: 0.85,
+                stars: 3, starMax: 4,
+                themeColor: 0x004D40, accentColor: 0x00BFA5,
+                diffColor: 0x26C6DA
             },
             {
-                id: 'level4',
-                num: 'LEVEL 4',
-                title: 'Procession Road',
-                subtitle: 'The Grand Shobha Yatra',
-                diff: 'EXPERT',
-                stars: '⭐⭐⭐⭐',
-                themeColor: 0x4A148C,
-                accentColor: 0xAB47BC,
-                x: 235,
-                y: 345,
-                w: 330,
-                h: 155
-            },
-            {
-                id: 'level5',
-                num: 'LEVEL 5',
-                title: 'The Pandal (Finale)',
-                subtitle: 'Lord Ganesha\'s Sanctuary',
-                diff: 'MASTER',
-                stars: '⭐⭐⭐⭐⭐',
-                themeColor: 0x004D40,
-                accentColor: 0x00BFA5,
-                x: 640,
-                y: 345,
-                w: 330,
-                h: 155
-            },
-            {
-                id: 'level6',
-                num: '🔥 BONUS',
-                title: 'Rage Round 💀',
-                subtitle: 'Reversed Galli Chaos',
-                diff: 'NIGHTMARE',
-                stars: '💀💀💀',
+                id: 'level6', num: 4, label: '🔥 BONUS',
+                title: 'Rage Round 💀', subtitle: 'Reversed Galli Chaos',
+                diff: 'NIGHTMARE', diffPct: 1.0,
+                stars: 4, starMax: 4,
                 isBonus: true,
-                themeColor: 0xB71C1C,
-                accentColor: 0xFF1744,
-                x: 1045,
-                y: 345,
-                w: 330,
-                h: 155
+                themeColor: 0xB71C1C, accentColor: 0xFF1744,
+                diffColor: 0xFF1744
             }
         ];
 
-        levels.forEach(lvl => {
-            this.createLevelCard(lvl);
+        levels.forEach((lvl, i) => {
+            const col = i % 2;
+            const row = Math.floor(i / 2);
+            this.createLevelCard(lvl, colXs[col], rowYs[row], cardW, cardH);
         });
 
-        // Dedicated Sky Dash Bonus Mode Banner Card
-        this.createSkyDashCard(width / 2, 525, 1140, 118);
+        // ── SKY DASH BANNER ─────────────────────────────────────────
+        this.createSkyDashCard(width / 2, 540, 1020, 108);
 
-        // Bottom tip
-        this.add.text(width / 2, 680, '✨ All platformer levels unlocked • Click any level card or take flight in Sky Dash!', {
+        // ── FOOTER ──────────────────────────────────────────────────
+        this.add.text(width / 2, 668, '✨  All festival levels unlocked  •  Click any card to play  •  Try Sky Dash for aerial chaos!', {
             fontFamily: 'Segoe UI, sans-serif',
-            fontSize: '15px',
-            color: '#ECEFF1'
+            fontSize: '13.5px',
+            color: '#90A4AE'
         }).setOrigin(0.5);
     }
 
-    createLevelCard(lvl) {
-        const card = this.add.container(lvl.x, lvl.y);
-        const w = lvl.w;
-        const h = lvl.h;
+    // ─────────────────────────────────────────────────────────────
+    //  Individual Level Card
+    // ─────────────────────────────────────────────────────────────
+    createLevelCard(lvl, cx, cy, w, h) {
+        const card = this.add.container(cx, cy);
+        const baseBgColor = lvl.isBonus ? 0x1e0505 : 0x130920;
 
-        // Card background
+        // ── Background ──
         const cardBg = this.add.graphics();
-        const baseBgColor = lvl.isBonus ? 0x240606 : 0x180d24;
-        cardBg.fillStyle(baseBgColor, 0.94);
-        cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 18);
-        cardBg.lineStyle(3, lvl.accentColor, 0.95);
-        cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 18);
+        cardBg.fillStyle(baseBgColor, 0.96);
+        cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 16);
+        cardBg.lineStyle(2.5, lvl.accentColor, 0.85);
+        cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 16);
 
-        // Top level badge
-        const badgeW = lvl.isBonus ? 116 : 105;
+        // ── Left accent strip (colour bar) ──
+        const strip = this.add.graphics();
+        strip.fillStyle(lvl.themeColor, 1);
+        strip.fillRoundedRect(-w / 2, -h / 2, 6, h, { tl: 16, bl: 16, tr: 0, br: 0 });
+
+        // ── Level number badge (top-left) ──
+        const badgeW = lvl.isBonus ? 120 : (lvl.label.length > 8 ? 140 : 100);
         const badgeBg = this.add.graphics();
         badgeBg.fillStyle(lvl.themeColor, 1);
-        badgeBg.fillRoundedRect(-w / 2 + 16, -h / 2 + 14, badgeW, 26, 13);
+        badgeBg.fillRoundedRect(-w / 2 + 16, -h / 2 + 12, badgeW, 26, 13);
+        const badgeText = this.add.text(-w / 2 + 16 + badgeW / 2, -h / 2 + 25, lvl.label, {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '13px',
+            fontStyle: 'bold',
+            color: '#FFFFFF'
+        }).setOrigin(0.5);
 
-        const badgeText = this.add.text(-w / 2 + 16 + badgeW / 2, -h / 2 + 27, lvl.num, {
+        // ── Big level number (right side, semi-transparent watermark) ──
+        const numWatermark = this.add.text(w / 2 - 22, 0, lvl.isBonus ? '🔥' : String(lvl.num), {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '62px',
+            fontStyle: '900',
+            color: lvl.isBonus ? '#FF1744' : '#' + lvl.accentColor.toString(16).padStart(6, '0')
+        }).setOrigin(1, 0.5).setAlpha(0.13);
+
+        // ── Title & Subtitle ──
+        const titleText = this.add.text(-w / 2 + 20, -h / 2 + 50, lvl.title, {
+            fontFamily: 'Trebuchet MS, sans-serif',
+            fontSize: '19px',
+            fontStyle: 'bold',
+            color: '#FFFFFF'
+        });
+        const subText = this.add.text(-w / 2 + 20, -h / 2 + 76, lvl.subtitle, {
+            fontFamily: 'Segoe UI, sans-serif',
+            fontSize: '12.5px',
+            color: lvl.isBonus ? '#FFAB91' : '#90A4AE'
+        });
+
+        // ── Difficulty label + mini bar ──
+        const diffLabel = this.add.text(-w / 2 + 20, -h / 2 + 102, `Difficulty:  ${lvl.diff}`, {
+            fontFamily: 'Segoe UI, sans-serif',
+            fontSize: '11.5px',
+            fontStyle: 'bold',
+            color: '#' + lvl.diffColor.toString(16).padStart(6, '0')
+        });
+
+        // Difficulty progress bar (full track + filled portion)
+        const barX = -w / 2 + 20;
+        const barY = -h / 2 + 122;
+        const barTotalW = 160;
+        const barH = 6;
+        const diffBar = this.add.graphics();
+        diffBar.fillStyle(0x2d2040, 1);
+        diffBar.fillRoundedRect(barX, barY, barTotalW, barH, 3);
+        diffBar.fillStyle(lvl.diffColor, 1);
+        diffBar.fillRoundedRect(barX, barY, Math.max(10, barTotalW * lvl.diffPct), barH, 3);
+
+        // ── Stars row ──
+        const starsStr = '⭐'.repeat(lvl.stars);
+        const starsText = lvl.isBonus
+            ? this.add.text(-w / 2 + 20, h / 2 - 32, '💀💀💀', { fontSize: '16px' })
+            : this.add.text(-w / 2 + 20, h / 2 - 32, starsStr, { fontSize: '14px' });
+
+        // ── Best Score badge ──
+        const lvlBest = CookieStorage.getInt('mushik_best_' + lvl.id, 0);
+        let bestElem = null;
+        if (lvlBest > 0) {
+            const bestBg2 = this.add.graphics();
+            bestBg2.fillStyle(0x1a0b30, 0.9);
+            bestBg2.fillRoundedRect(-w / 2 + 20, h / 2 - 52, 130, 22, 11);
+            const bestTxt2 = this.add.text(-w / 2 + 85, h / 2 - 41, `👑 BEST: ${lvlBest} pts`, {
+                fontFamily: 'Segoe UI, sans-serif',
+                fontSize: '11px',
+                fontStyle: 'bold',
+                color: '#FFD54F'
+            }).setOrigin(0.5);
+            bestElem = [bestBg2, bestTxt2];
+        }
+
+        // ── PLAY button (bottom-right) ──
+        const btnX = w / 2 - 108;
+        const btnY = h / 2 - 46;
+        const btnW = 96;
+        const btnH = 34;
+        const btnBg = this.add.graphics();
+        btnBg.fillStyle(lvl.themeColor, 1);
+        btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 17);
+        btnBg.lineStyle(2, lvl.isBonus ? 0xFF8A80 : 0xFFD54F, 1);
+        btnBg.strokeRoundedRect(btnX, btnY, btnW, btnH, 17);
+        const btnText = this.add.text(btnX + btnW / 2, btnY + btnH / 2, '▶  PLAY', {
             fontFamily: 'Trebuchet MS, sans-serif',
             fontSize: '14px',
             fontStyle: 'bold',
             color: '#FFFFFF'
         }).setOrigin(0.5);
 
-        // Difficulty tag in top right
-        const diffText = this.add.text(w / 2 - 16, -h / 2 + 27, `${lvl.stars} ${lvl.diff}`, {
-            fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '13px',
-            fontStyle: 'bold',
-            color: lvl.isBonus ? '#FF8A80' : '#FFD54F'
-        }).setOrigin(1, 0.5);
-
-        // Level Title
-        const titleText = this.add.text(-w / 2 + 18, -h / 2 + 55, lvl.title, {
-            fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '20px',
-            fontStyle: 'bold',
-            color: '#FFFFFF'
-        });
-
-        // Level Subtitle
-        const subText = this.add.text(-w / 2 + 18, -h / 2 + 82, lvl.subtitle, {
-            fontFamily: 'Segoe UI, sans-serif',
-            fontSize: '13px',
-            color: lvl.isBonus ? '#FFAB91' : '#B0BEC5'
-        });
-
-        // Small modak decorative icon
-        const icon = this.add.image(-w / 2 + 35, h / 2 - 26, 'modak').setDisplaySize(26, 26);
-
-        // Play button inside card
-        const btnBg = this.add.graphics();
-        btnBg.fillStyle(lvl.themeColor, 1);
-        btnBg.fillRoundedRect(w / 2 - 140, h / 2 - 44, 124, 32, 16);
-        btnBg.lineStyle(2, lvl.isBonus ? 0xFF8A80 : 0xFFD54F, 1);
-        btnBg.strokeRoundedRect(w / 2 - 140, h / 2 - 44, 124, 32, 16);
-
-        const btnText = this.add.text(w / 2 - 78, h / 2 - 28, '▶ PLAY', {
-            fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '15px',
-            fontStyle: 'bold',
-            color: '#FFFFFF'
-        }).setOrigin(0.5);
-
-        // Level Best Score badge from Cookies
-        const lvlBest = CookieStorage.getInt('mushik_best_' + lvl.id, 0);
-        let bestText = null;
-        if (lvlBest > 0) {
-            bestText = this.add.text(-w / 2 + 55, h / 2 - 28, `👑 ${lvlBest} pts`, {
-                fontFamily: 'Segoe UI, sans-serif',
-                fontSize: '13px',
-                fontStyle: 'bold',
-                color: '#FFD54F'
-            }).setOrigin(0, 0.5);
-        }
-
-        const items = [cardBg, badgeBg, badgeText, diffText, titleText, subText, icon, btnBg, btnText];
-        if (bestText) items.push(bestText);
+        // Assemble card
+        const items = [cardBg, strip, badgeBg, badgeText, numWatermark,
+            titleText, subText, diffLabel, diffBar, starsText, btnBg, btnText];
+        if (bestElem) items.push(...bestElem);
         card.add(items);
         card.setSize(w, h);
         card.setInteractive({ useHandCursor: true });
 
+        // Hover / click
         card.on('pointerover', () => {
-            card.setScale(1.04);
+            card.setScale(1.035);
             cardBg.clear();
-            cardBg.fillStyle(lvl.isBonus ? 0x3d0a0a : 0x28163c, 0.98);
-            cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 18);
-            cardBg.lineStyle(4, lvl.isBonus ? 0xFF5252 : 0xFFEB3B, 1);
-            cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 18);
+            cardBg.fillStyle(lvl.isBonus ? 0x350a0a : 0x1e1030, 1);
+            cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 16);
+            cardBg.lineStyle(3, lvl.isBonus ? 0xFF5252 : 0xFFEB3B, 1);
+            cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 16);
+            btnBg.clear();
+            btnBg.fillStyle(Phaser.Display.Color.ValueToColor(lvl.themeColor).lighten(20).color, 1);
+            btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 17);
+            btnBg.lineStyle(2, 0xFFEB3B, 1);
+            btnBg.strokeRoundedRect(btnX, btnY, btnW, btnH, 17);
         });
-
         card.on('pointerout', () => {
             card.setScale(1.0);
             cardBg.clear();
-            cardBg.fillStyle(baseBgColor, 0.94);
-            cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 18);
-            cardBg.lineStyle(3, lvl.accentColor, 0.95);
-            cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 18);
+            cardBg.fillStyle(baseBgColor, 0.96);
+            cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 16);
+            cardBg.lineStyle(2.5, lvl.accentColor, 0.85);
+            cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 16);
+            btnBg.clear();
+            btnBg.fillStyle(lvl.themeColor, 1);
+            btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 17);
+            btnBg.lineStyle(2, lvl.isBonus ? 0xFF8A80 : 0xFFD54F, 1);
+            btnBg.strokeRoundedRect(btnX, btnY, btnW, btnH, 17);
         });
-
         card.on('pointerdown', () => {
             if (window.SoundEffects) window.SoundEffects.playJump();
-            this.cameras.main.fade(300, 0, 0, 0);
-            this.time.delayedCall(300, () => {
+            this.cameras.main.fade(280, 0, 0, 0);
+            this.time.delayedCall(280, () => {
                 this.scene.start('LevelScene', { levelId: lvl.id });
             });
         });
     }
 
+    // ─────────────────────────────────────────────────────────────
+    //  Sky Dash Banner Card (bottom strip)
+    // ─────────────────────────────────────────────────────────────
     createSkyDashCard(x, y, w, h) {
         const card = this.add.container(x, y);
         const bestScore = CookieStorage.getInt('mushik_skydash_best', 0);
 
-        // Card background: deep aviation navy gradient with neon cyan/gold border
+        // Background
         const cardBg = this.add.graphics();
-        cardBg.fillStyle(0x0a142c, 0.95);
-        cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 20);
-        cardBg.lineStyle(3, 0x00E5FF, 1);
-        cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 20);
+        cardBg.fillStyle(0x07101e, 0.96);
+        cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 16);
+        cardBg.lineStyle(2.5, 0x00E5FF, 0.9);
+        cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 16);
 
-        // Mushak Biplane sprite preview on the left
-        const plane = this.add.image(-w / 2 + 65, 0, 'plane');
-        plane.setDisplaySize(76, 76);
-        plane.setRotation(-0.12);
+        // Left cyan strip
+        const strip = this.add.graphics();
+        strip.fillStyle(0x00838F, 1);
+        strip.fillRoundedRect(-w / 2, -h / 2, 6, h, { tl: 16, bl: 16, tr: 0, br: 0 });
 
-        // Floating bob animation for the biplane
-        this.tweens.add({
-            targets: plane,
-            y: -6,
-            duration: 800,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
+        // Plane icon
+        const plane = this.add.image(-w / 2 + 62, 0, 'plane');
+        plane.setDisplaySize(68, 68);
+        plane.setRotation(-0.1);
+        this.tweens.add({ targets: plane, y: '-=7', duration: 750, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
-        // Mode badge
+        // Badge
         const badgeBg = this.add.graphics();
         badgeBg.fillStyle(0x00838F, 1);
-        badgeBg.fillRoundedRect(-w / 2 + 125, -h / 2 + 14, 185, 26, 13);
-
-        const badgeText = this.add.text(-w / 2 + 125 + 92, -h / 2 + 27, '✈️ SPECIAL BONUS MODE', {
-            fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '13px',
-            fontStyle: 'bold',
-            color: '#FFFFFF'
+        badgeBg.fillRoundedRect(-w / 2 + 116, -h / 2 + 12, 190, 24, 12);
+        const badgeText = this.add.text(-w / 2 + 116 + 95, -h / 2 + 24, '✈️  SPECIAL BONUS MODE', {
+            fontFamily: 'Trebuchet MS, sans-serif', fontSize: '12px', fontStyle: 'bold', color: '#FFFFFF'
         }).setOrigin(0.5);
 
-        // Main Title
-        const titleText = this.add.text(-w / 2 + 125, -h / 2 + 48, 'SKY DASH: BIPLANE RUN', {
-            fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '23px',
-            fontStyle: '900',
-            color: '#00E5FF',
-            stroke: '#002244',
-            strokeThickness: 3
+        // Title
+        const titleText = this.add.text(-w / 2 + 116, -h / 2 + 44, 'SKY DASH: BIPLANE RUN', {
+            fontFamily: 'Trebuchet MS, sans-serif', fontSize: '22px', fontStyle: '900',
+            color: '#00E5FF', stroke: '#001a2e', strokeThickness: 3
         });
 
         // Subtitle
-        const subText = this.add.text(-w / 2 + 125, -h / 2 + 78, 'Flappy Mushak Arcade Challenge • Flap through ancient temple pillars & set the high score!', {
-            fontFamily: 'Segoe UI, sans-serif',
-            fontSize: '14px',
-            color: '#B2EBF2'
+        const subText = this.add.text(-w / 2 + 116, -h / 2 + 72, 'Flappy arcade challenge — flap through temple pillars & chase the high score!', {
+            fontFamily: 'Segoe UI, sans-serif', fontSize: '13px', color: '#80DEEA'
         });
 
-        // Best Score Badge
+        // Best score
         const bestBg = this.add.graphics();
-        bestBg.fillStyle(0x1a237e, 0.9);
-        bestBg.fillRoundedRect(w / 2 - 370, -22, 175, 44, 14);
-        bestBg.lineStyle(2, 0xFFD700, 0.9);
-        bestBg.strokeRoundedRect(w / 2 - 370, -22, 175, 44, 14);
-
-        const bestText = this.add.text(w / 2 - 370 + 87, 0, `👑 BEST: ${bestScore}`, {
-            fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '17px',
-            fontStyle: 'bold',
-            color: '#FFD700'
+        bestBg.fillStyle(0x0d1a40, 0.95);
+        bestBg.fillRoundedRect(w / 2 - 348, -h / 2 + 14, 160, 38, 12);
+        bestBg.lineStyle(1.5, 0xFFD700, 0.8);
+        bestBg.strokeRoundedRect(w / 2 - 348, -h / 2 + 14, 160, 38, 12);
+        const bestText = this.add.text(w / 2 - 348 + 80, -h / 2 + 33, `👑 BEST: ${bestScore}`, {
+            fontFamily: 'Trebuchet MS, sans-serif', fontSize: '16px', fontStyle: 'bold', color: '#FFD700'
         }).setOrigin(0.5);
 
-        // Fly Button
+        // FLY NOW button
+        const btnW2 = 130;
+        const btnH2 = 42;
+        const btnX2 = w / 2 - btnW2 - 16;
+        const btnY2 = -btnH2 / 2;
         const btnBg = this.add.graphics();
         btnBg.fillStyle(0xFF6F00, 1);
-        btnBg.fillRoundedRect(w / 2 - 170, -24, 145, 48, 24);
+        btnBg.fillRoundedRect(btnX2, btnY2, btnW2, btnH2, 21);
         btnBg.lineStyle(2, 0xFFD54F, 1);
-        btnBg.strokeRoundedRect(w / 2 - 170, -24, 145, 48, 24);
-
-        const btnText = this.add.text(w / 2 - 170 + 72, 0, '▶ FLY NOW', {
-            fontFamily: 'Trebuchet MS, sans-serif',
-            fontSize: '18px',
-            fontStyle: 'bold',
-            color: '#FFFFFF'
+        btnBg.strokeRoundedRect(btnX2, btnY2, btnW2, btnH2, 21);
+        const btnText = this.add.text(btnX2 + btnW2 / 2, btnY2 + btnH2 / 2, '▶  FLY NOW', {
+            fontFamily: 'Trebuchet MS, sans-serif', fontSize: '17px', fontStyle: 'bold', color: '#FFFFFF'
         }).setOrigin(0.5);
 
-        card.add([cardBg, plane, badgeBg, badgeText, titleText, subText, bestBg, bestText, btnBg, btnText]);
+        card.add([cardBg, strip, plane, badgeBg, badgeText, titleText, subText, bestBg, bestText, btnBg, btnText]);
         card.setSize(w, h);
         card.setInteractive({ useHandCursor: true });
 
         card.on('pointerover', () => {
-            card.setScale(1.02);
+            card.setScale(1.018);
             cardBg.clear();
-            cardBg.fillStyle(0x102550, 0.98);
-            cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 20);
-            cardBg.lineStyle(4, 0x00FFFF, 1);
-            cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 20);
+            cardBg.fillStyle(0x0f2035, 1);
+            cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 16);
+            cardBg.lineStyle(3, 0x00FFFF, 1);
+            cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 16);
         });
-
         card.on('pointerout', () => {
             card.setScale(1.0);
             cardBg.clear();
-            cardBg.fillStyle(0x0a142c, 0.95);
-            cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 20);
-            cardBg.lineStyle(3, 0x00E5FF, 1);
-            cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 20);
+            cardBg.fillStyle(0x07101e, 0.96);
+            cardBg.fillRoundedRect(-w / 2, -h / 2, w, h, 16);
+            cardBg.lineStyle(2.5, 0x00E5FF, 0.9);
+            cardBg.strokeRoundedRect(-w / 2, -h / 2, w, h, 16);
         });
-
         card.on('pointerdown', () => {
             if (window.SoundEffects) window.SoundEffects.playJump();
-            this.cameras.main.fade(300, 0, 0, 0);
-            this.time.delayedCall(300, () => {
-                this.scene.start('SkyDashScene');
-            });
+            this.cameras.main.fade(280, 0, 0, 0);
+            this.time.delayedCall(280, () => this.scene.start('SkyDashScene'));
         });
     }
 }
@@ -2454,9 +2435,7 @@ class LevelCompleteScene extends Phaser.Scene {
 
         const nextLevelMap = {
             'level1': 'level2',
-            'level2': 'level3',
-            'level3': 'level4',
-            'level4': 'level5'
+            'level2': 'level5'
         };
         const nextLevelId = nextLevelMap[this.summaryData.levelId];
         const isFinale = (this.summaryData.levelId === 'level5');
@@ -2466,7 +2445,7 @@ class LevelCompleteScene extends Phaser.Scene {
         let subTitle = 'Ganpati Bappa Morya! Mushak reached the holy Pandal!';
         if (isFinale) {
             headerTitle = '🚩 महोत्सव विजय! GAME COMPLETE! 🚩';
-            subTitle = 'Mushak has completed the pilgrimage across all 5 festival neighborhoods!';
+            subTitle = 'Mushak has completed the pilgrimage across all festival neighborhoods!';
         } else if (isRageRound) {
             headerTitle = '💀 महोत्सव विजय! RAGE ROUND SURVIVED! 💀';
             subTitle = 'Unbelievable! You conquered the reversed festival gauntlet!';
@@ -2774,6 +2753,13 @@ class SkyDashScene extends Phaser.Scene {
         this.obstacles = [];
         this.spawnTimer = null;
 
+        // Speed escalation state
+        this.gameTime = 0;          // seconds elapsed since game started
+        this.baseSpeed = 220;       // starting scroll speed (px/s)
+        this.maxSpeed  = 480;       // maximum scroll speed cap
+        this.speedRampRate = 18;    // px/s gained per second of play
+        this.currentSpeed = this.baseSpeed;
+
         // Background: Scrolling festive sky (depth 0)
         this.bg = this.add.tileSprite(width / 2, height / 2, width, height, 'background');
         this.bg.setTint(0x7986CB);
@@ -3018,15 +3004,25 @@ class SkyDashScene extends Phaser.Scene {
         this.plane.body.setAllowGravity(true);
         this.plane.body.setGravityY(950);
 
+        // Reset speed escalation
+        this.gameTime = 0;
+        this.currentSpeed = this.baseSpeed;
+
         // Spawn first obstacle pair IMMEDIATELY
         this.spawnObstaclePair();
 
-        // Start repeating spawner timer for subsequent obstacles (1.9s interval)
-        this.spawnTimer = this.time.addEvent({
-            delay: 1900,
-            callback: this.spawnObstaclePair,
-            callbackScope: this,
-            loop: true
+        // Start repeating spawner — interval shrinks dynamically via rescheduleSpawner()
+        this._scheduleNextSpawn();
+    }
+
+    _scheduleNextSpawn() {
+        if (this.gameState !== 'PLAYING') return;
+        // Interval range: 1900ms (start) → 1050ms (full speed), inversely tied to currentSpeed
+        const speedFraction = Math.min(1, (this.currentSpeed - this.baseSpeed) / (this.maxSpeed - this.baseSpeed));
+        const interval = Math.round(1900 - speedFraction * 850);
+        this.spawnTimer = this.time.delayedCall(interval, () => {
+            this.spawnObstaclePair();
+            this._scheduleNextSpawn();
         });
     }
 
@@ -3050,7 +3046,10 @@ class SkyDashScene extends Phaser.Scene {
         if (this.gameState !== 'PLAYING') return;
 
         const spawnX = 1320;
-        const gapHeight = 260; // Extra generous 260px gap for smooth passage
+
+        // Gap shrinks gradually: 260px (start) → 180px (max speed)
+        const speedFraction = Math.min(1, (this.currentSpeed - this.baseSpeed) / (this.maxSpeed - this.baseSpeed));
+        const gapHeight = Math.round(260 - speedFraction * 80);
 
         // Smooth gradual height transitions without steep deadends
         if (!this.lastGapCenter) {
@@ -3099,9 +3098,15 @@ class SkyDashScene extends Phaser.Scene {
         }
 
         if (this.gameState === 'PLAYING') {
-            // Scroll background
-            this.bg.tilePositionX += 1.8;
-            this.ground.tilePositionX += 3.5;
+            // Advance elapsed time and ramp up speed
+            this.gameTime += delta / 1000;
+            this.currentSpeed = Math.min(this.maxSpeed, this.baseSpeed + this.gameTime * this.speedRampRate);
+
+            // Scale background / ground scroll proportionally to currentSpeed
+            const bgScroll = 1.8 * (this.currentSpeed / this.baseSpeed);
+            const groundScroll = 3.5 * (this.currentSpeed / this.baseSpeed);
+            this.bg.tilePositionX += bgScroll;
+            this.ground.tilePositionX += groundScroll;
 
             // Smooth pitch rotation based on vertical velocity
             const vy = this.plane.body.velocity.y;
@@ -3114,8 +3119,8 @@ class SkyDashScene extends Phaser.Scene {
                 return;
             }
 
-            // Move all active obstacles synchronously every frame
-            const moveDelta = 220 * (delta / 1000);
+            // Move all active obstacles synchronously every frame (speed-scaled)
+            const moveDelta = this.currentSpeed * (delta / 1000);
             const px1 = this.plane.x - 20;
             const px2 = this.plane.x + 20;
             const py1 = this.plane.y - 12;
